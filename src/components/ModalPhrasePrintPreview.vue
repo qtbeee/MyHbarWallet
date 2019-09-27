@@ -1,75 +1,56 @@
 <template>
     <Modal
-        :is-open="props.isOpen"
+        :is-open="isOpen"
         :large="true"
-        :title="$t('modalPhrasePrintPreview.title')"
-        @change="onChange"
+        title="Print Preview"
+        @change="this.$listeners.change"
     >
-        <div ref="mnemonic">
-            <div class="logo-contents">
-                <div class="header-container">
-                    <span class="header">
-                        My<strong>Hbar</strong>Wallet
-                    </span>
-                    <span class="sub-header">{{
-                        $t("modalPhrasePrintPreview.mnemonicPhrase")
-                    }}</span>
-                </div>
-                <div class="support-email">
-                    <img
-                        alt=""
-                        class="icon"
-                        src="../assets/icon-bell.svg"
-                    />support@myhbarwallet.app
-                </div>
+        <div class="logo-contents">
+            <div class="header-container">
+                <span class="header">
+                    My<strong>Hedera</strong>Wallet
+                </span>
+                <span class="sub-header">Mnemonic Phrase</span>
             </div>
-            <div class="password-disclaimer">
-                <h3>
-                    {{ $t("modalPhrasePrintPreview.saveThisSheet") }}
-                </h3>
-                <p
-                    v-html="
-                        formatRich(
-                            $t(
-                                'modalPhrasePrintPreview.weCanNotChagneYourPassword'
-                            ).toString(),
-                            { strongClass: 'important' }
-                        )
-                    "
-                />
+            <div class="support-email">
+                <img
+                    alt=""
+                    class="icon"
+                    src="../assets/icon-bell.svg"
+                />support@myhbarwallet.com
             </div>
+        </div>
+        <div class="password-disclaimer">
+            <h3>
+                Please Keep This Sheet in a Very Safe Place. It is your
+                property!
+            </h3>
+            We <strong>CAN NOT</strong> change your password. Please
+            <strong>DO NOT FORGET</strong> to save your password. It is your
+            private key. You will need this
+            <strong>Password + Mnemonic Phrase</strong> to access your wallet.
+        </div>
 
-            <div class="contents">
-                <Mnemonic
-                    :editable="false"
-                    :words="props.words.length"
-                    :value="props.words"
-                />
-            </div>
+        <div class="contents">
+            <Mnemonic :editable="false" :words="words.length" :value="words" />
         </div>
 
         <div class="button-container">
             <Button
-                class="button-save"
-                :label="$t('common.save')"
+                class="button-print"
+                label="Print"
                 outline
-                @click="handleClickSave"
+                @click="handleClickPrint"
             />
         </div>
     </Modal>
 </template>
 
 <script lang="ts">
-import { createComponent, ref, SetupContext } from "@vue/composition-api";
+import { createComponent } from "vue-function-api";
 import Button from "../components/Button.vue";
 import Modal from "./Modal.vue";
-import Mnemonic from "../components/MnemonicInput.vue";
-import { formatRich } from "../formatter";
-
-interface Props {
-    isOpen: boolean;
-    words: string[];
-}
+import Mnemonic from "@/components/MnemonicInput.vue";
 
 export default createComponent({
     components: {
@@ -82,50 +63,20 @@ export default createComponent({
         event: "change"
     },
     props: {
-        isOpen: Boolean,
-        words: Array
-    },
-    setup(props: Props, context: SetupContext) {
-        const mnemonic = ref(null);
-
-        async function handleClickSave(): Promise<void> {
-            let element = null;
-
-            try {
-                // Note: Vue Instances need $el to get their HTML, dumb elements do not
-                element = (mnemonic.value as unknown) as HTMLElement;
-            } catch (error) {
-                console.warn(error);
-                throw error;
-            }
-
-            const options = {
-                filename: "MHW_Mnemonic_Phrase.pdf",
-                margin: [10, 10, 10, 10],
-                pageSize: "a4",
-                image: { type: "png", quality: 1 },
-                jsPDF: {
-                    unit: "mm"
-                }
-            };
-
-            const HTML2PDF = await import("html2pdf.js");
-            HTML2PDF.default()
-                .set(options)
-                .from(element)
-                .save();
+        isOpen: { type: Boolean },
+        words: {
+            type: Array,
+            // FIXME: Make required when we have data
+            required: true
         }
-
-        function onChange(): void {
-            context.emit("change");
+    },
+    setup() {
+        function handleClickPrint() {
+            window.print();
         }
 
         return {
-            props,
-            mnemonic,
-            onChange,
-            handleClickSave,
-            formatRich
+            handleClickPrint
         };
     }
 });
@@ -185,7 +136,7 @@ export default createComponent({
     font-size: 14px;
     margin-block-end: 30px;
 
-    & >>> .important {
+    & > strong {
         color: var(--color-lightish-red);
         font-weight: 700;
     }
@@ -208,7 +159,7 @@ export default createComponent({
     }
 }
 
-.button-save {
+.button-print {
     align-self: center;
 
     @media print {

@@ -5,14 +5,21 @@
             <div class="main">
                 <router-view />
             </div>
+            <!-- todo: These are just placeholders for the actual items,
+            which have not been merged into master yet -->
             <AccountCard
-                v-if="account"
                 :realm="account.realm"
                 :shard="account.shard"
                 :account="account.account"
                 class="info-account"
+                :public-key="publicKey"
             />
-            <BalanceCard class="info-balance" />
+            <BalanceCard
+                :balance="balance"
+                :busy="balanceIsBusy"
+                class="info-balance"
+                @refresh="handleBalanceRefresh"
+            />
             <NetworkCard class="info-network" />
         </div>
     </div>
@@ -20,10 +27,10 @@
 
 <script lang="ts">
 import InterfaceNavigation from "../components/InterfaceNavigation.vue";
-import NetworkCard from "../components/NetworkCard.vue";
-import BalanceCard from "../components/BalanceCard.vue";
-import AccountCard from "../components/AccountCard.vue";
-import { computed, createComponent } from "@vue/composition-api";
+import NetworkCard from "@/components/NetworkCard.vue";
+import BalanceCard from "@/components/BalanceCard.vue";
+import AccountCard from "@/components/AccountCard.vue";
+import { createComponent, value, computed } from "vue-function-api";
 import store from "../store";
 
 export default createComponent({
@@ -34,18 +41,41 @@ export default createComponent({
         AccountCard
     },
     setup() {
-        // Boolean used to determine if the user has been to interface
-        // Otherwise don't show the Logout modal
-        store.state.interfaceMenu.hasBeenToInterface = true;
-
+        const publicKey = computed(() =>
+            store.state.wallet.session != null
+                ? store.state.wallet.session.publicKey
+                : null
+        );
         const account = computed(() =>
             store.state.wallet.session != null
                 ? store.state.wallet.session.account
                 : null
         );
 
+        // FIXME: This should be NULL in the beginning
+        const balance = value(0);
+        const balanceIsBusy = value(false);
+
+        async function handleBalanceRefresh() {
+            const session = store.state.wallet.session;
+            if (session == null) return;
+
+            balanceIsBusy.value = true;
+
+            try {
+                const accountBalance: BigInt = await session.client.getAccountBalance();
+                balance.value = Number(accountBalance);
+            } finally {
+                balanceIsBusy.value = false;
+            }
+        }
+
         return {
-            account
+            handleBalanceRefresh,
+            balanceIsBusy,
+            account,
+            publicKey,
+            balance
         };
     }
 });
@@ -66,14 +96,13 @@ export default createComponent({
         "info-account info-balance info-network"
         "main main main";
     grid-template-columns: repeat(3, calc(100% * (1 / 3) - (30px / 3)));
-    grid-template-rows: min-content 1fr;
+    grid-template-rows: auto;
     padding: 20px;
 
     @media (max-width: 1024px) {
         grid-template-areas:
             "info-account info-account info-account"
             "main main main";
-        grid-template-columns: 1fr;
     }
 }
 

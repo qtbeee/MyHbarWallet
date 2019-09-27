@@ -6,7 +6,6 @@
             compact,
             danger
         }"
-        type="submit"
         :disabled="disabled"
         v-on="disabled ? null : $listeners"
     >
@@ -28,9 +27,9 @@
 </template>
 
 <script lang="ts">
-import { createComponent } from "@vue/composition-api";
+import { createComponent } from "vue-function-api";
 import { mdiLoading } from "@mdi/js";
-import MaterialDesignIcon from "../components/MaterialDesignIcon.vue";
+import MaterialDesignIcon from "@/components/MaterialDesignIcon.vue";
 
 export default createComponent({
     components: {
@@ -62,6 +61,8 @@ button {
     border: 1px solid var(--color-melbourne-cup);
     border-radius: 4px;
     color: var(--color-white);
+
+    /* flex-grow: 1; */
     font-size: 14px;
     font-weight: 500;
     min-width: 250px;
@@ -78,10 +79,6 @@ button {
     }
 
     &.busy {
-        padding: 8.5px;
-    }
-
-    &.busy:not(.compact) {
         padding: 16.5px;
     }
 

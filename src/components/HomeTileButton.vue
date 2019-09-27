@@ -2,10 +2,12 @@
     <router-link class="home-tile-button" :to="{ name: route }">
         <img class="tile-image" :src="image" />
         <div class="content">
+            <!-- TODO: This should likely be an hN at some point -->
             <div class="title">{{ title }}</div>
             <div class="message">{{ content }}</div>
             <div v-if="action" class="action-label">
                 {{ action }}
+                <!-- FIXME: Use material design icons to get a proper long arrow -->
                 <MaterialDesignIcon class="action-icon" :icon="rightArrow" />
             </div>
         </div>
@@ -13,9 +15,9 @@
 </template>
 
 <script lang="ts">
-import MaterialDesignIcon from "../components/MaterialDesignIcon.vue";
+import MaterialDesignIcon from "@/components/MaterialDesignIcon.vue";
 import { mdiArrowRight } from "@mdi/js";
-import { createComponent } from "@vue/composition-api";
+import { createComponent } from "vue-function-api";
 
 export default createComponent({
     components: {
@@ -42,13 +44,11 @@ export default createComponent({
     border-radius: 4px;
     color: var(--color-white);
     display: flex;
+    justify-content: center;
     outline: none;
     padding: 30px 40px;
     padding-block-end: 40px;
     text-decoration: none;
-
-    /* so the shadow appears over the image directly below this */
-    z-index: 1;
 
     @media (min-width: 1025px) {
         transition: transform 0.3s ease;
@@ -63,13 +63,6 @@ export default createComponent({
     @media (prefers-reduced-motion) {
         transition: none;
     }
-}
-
-.content {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    justify-content: space-between;
 }
 
 .tile-image {
@@ -108,7 +101,6 @@ export default createComponent({
 
 @media (max-width: 414px) {
     .home-tile-button {
-        justify-content: center;
         padding: 11px;
     }
 
@@ -117,6 +109,7 @@ export default createComponent({
         font-size: 14px;
         font-weight: 500;
         margin-block: 10px 10px;
+        text-align: center;
     }
 
     .message,

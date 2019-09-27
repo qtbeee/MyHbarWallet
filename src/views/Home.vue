@@ -5,18 +5,21 @@
                 <div class="banner">
                     <div class="banner-content">
                         <div class="title">
-                            {{ $t("home.theNumberOneHbarWallet") }}
+                            Hedera's
+                        </div>
+                        <div class="title">
+                            Original Wallet
                         </div>
                         <div class="subtitle">
-                            {{
-                                $t(
-                                    "home.myHbarWalletIsAFreeClientSideInterface"
-                                )
-                            }}
+                            MyHederaWallet is a free, client-side interface
+                            helping you interact with Hedera hashgraph. Our
+                            easy-to-use, open-source platform allows you to
+                            generate wallets, interact with smart contracts, and
+                            so much more.
                         </div>
                     </div>
                     <div class="banner-image">
-                        <img :src="mountainTop" alt="banner" />
+                        <img src="https://placehold.it/400x400" alt="banner" />
                     </div>
                 </div>
                 <HomeTileButtons />
@@ -25,46 +28,72 @@
         <img class="circle" :src="circleImage" alt="circle" />
         <div id="about" class="about">
             <div class="page-container">
-                <div class="about-banner">
+                <div class="banner">
                     <div class="banner-content">
-                        <div class="about-title">
-                            {{ $t("home.aboutMyHbarWallet") }}
-                        </div>
+                        <div class="about-title">About MyHederaWallet</div>
                         <div class="about-subtitle">
-                            {{ $t("home.myHbarWalletIsAClone") }}
+                            MyHederaWallet puts Hedera Hashgraph at your
+                            fingertips. Bacon ipsum dolor amet shank swine beef
+                            ribs kevin chicken, jowl prosciutto flank shankle
+                            tenderloin burgdoggen leberkas sausage pork belly.
+                            Bresaola flank beef meatball fatback ground round,
+                            pancetta jerky porchetta.
                         </div>
                     </div>
-                    <img class="about-image" :src="hbarOrb" alt="about" />
+                    <img
+                        class="about-image"
+                        src="https://placehold.it/300x300"
+                        alt="about"
+                    />
                 </div>
             </div>
         </div>
         <Features />
         <FAQs />
+        <!-- TODO: Show community once we have more of one -->
         <Community v-if="false" />
+        <ModalForgotToLogOut
+            v-model="modalForgotToLogOutIsOpen"
+            @change="handleForgotToLogoutChange"
+        />
+        <Alerts timeout="7000" />
     </div>
 </template>
 
 <script lang="ts">
-import Features from "../components/Features.vue";
-import FAQs from "../components/FAQs.vue";
-import Community from "../components/Community.vue";
-import HomeTileButtons from "../components/HomeTileButtons.vue";
-import circleImage from "../assets/circle.png";
-import { createComponent } from "@vue/composition-api";
-import hbarOrb from "../assets/hbar_orb.svg";
-import mountainTop from "../assets/mountain_top.svg";
+import Features from "@/components/Features.vue";
+import FAQs from "@/components/FAQs.vue";
+import Community from "@/components/Community.vue";
+import HomeTileButtons from "@/components/HomeTileButtons.vue";
+import circleImage from "@/assets/circle.png";
+import ModalForgotToLogOut from "@/components/ModalForgotToLogOut.vue";
+import Alerts from "@/components/Alerts.vue";
+import { createComponent, computed } from "vue-function-api";
+import store from "@/store";
+
 export default createComponent({
     components: {
         FAQs,
         HomeTileButtons,
         Features,
-        Community
+        Community,
+        Alerts,
+        ModalForgotToLogOut
     },
     setup() {
+        const modalForgotToLogOutIsOpen = computed(
+            () => store.getters.IS_LOGGED_IN,
+            value => value
+        );
+
+        function handleForgotToLogoutChange() {
+            modalForgotToLogOutIsOpen.value = false;
+        }
+
         return {
             circleImage,
-            hbarOrb,
-            mountainTop
+            modalForgotToLogOutIsOpen,
+            handleForgotToLogoutChange
         };
     }
 });
@@ -79,6 +108,12 @@ export default createComponent({
 
 .top {
     background-color: var(--color-white);
+
+    @media (max-width: 480px) {
+        & .banner-image {
+            display: none;
+        }
+    }
 }
 
 .page-container {
@@ -92,40 +127,15 @@ export default createComponent({
     align-items: center;
     align-self: center;
     display: flex;
-    padding: 80px 30px;
+    padding: 30px;
     width: 100%;
 
-    @media (max-width: 1024px) {
-        padding-block: 30px;
-        padding-inline: 0;
-    }
-
-    @media (max-width: 600px) {
-        padding-block: 40px;
-    }
-
-    @media (max-width: 414px) {
-        padding: 35px;
-    }
-
-    @media (max-width: 360px) {
-        padding: 25px;
-    }
-
-    @media (max-width: 300px) {
-        padding: 10px;
-    }
-}
-
-.about-banner {
-    align-items: center;
-    align-self: center;
-    display: flex;
-    padding: 80px 30px;
-    width: 100%;
-
-    @media (max-width: 700px) {
+    @media (max-width: 810px) {
         flex-direction: column;
+    }
+
+    @media (max-width: 350px) {
+        padding: 10px;
     }
 }
 
@@ -158,11 +168,13 @@ export default createComponent({
     color: var(--color-ghostlands-coal);
     font-size: 45px;
     font-weight: 700;
+    height: 45px;
     line-height: 100%;
-    margin-block-end: 20px;
+    margin-block-end: 8px;
 
     @media (max-width: 480px) {
         font-size: 32px;
+        margin-block-end: 0;
     }
 }
 
@@ -178,15 +190,7 @@ export default createComponent({
 
     & :first-child {
         border-radius: 20px;
-        height: 300px;
-
-        @media (max-width: 1024px) {
-            height: 235px;
-        }
-
-        @media (max-width: 700px) {
-            display: none;
-        }
+        height: 400px;
     }
 }
 

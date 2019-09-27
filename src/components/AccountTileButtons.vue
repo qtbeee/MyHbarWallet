@@ -1,23 +1,16 @@
 <template>
     <div class="tile-grid">
-        <!-- TODO: Remove div below when hardware option is ready -->
-        <div class="ribbon-container">
-            <div class="coming-soon">{{ $t("common.comingSoon") }}</div>
-            <AccountTileButton
-                disabled
-                :title="$t('accountTileButtons.hardware')"
-                :content="$t('accountTileButtons.supportForHardwareWallets')"
-                :image="hardwareImage"
-                @click="$emit('click', 'hardware')"
-            />
-        </div>
         <AccountTileButton
-            :title="$t('accountTileButtons.software')"
-            :content="
-                $t('accountTileButtons.keystoreFilePrivateKeyMnemonicPhrase')
-            "
+            title="Hardware"
+            content="Trezor (support for more wallets in development)"
+            :image="hardwareImage"
+            @click="$emit('click', 'hardware')"
+        />
+        <AccountTileButton
+            title="Software"
+            content="Lorem ipsum dolor sit amet, consectetur"
             :image="softwareImage"
-            :note="$t('accountTileButtons.notRecommended')"
+            note="Not Recommended"
             @click="$emit('click', 'software')"
         />
     </div>
@@ -27,7 +20,7 @@
 import AccountTileButton from "../components/AccountTileButton.vue";
 import hardwareImage from "../assets/button-hardware.svg";
 import softwareImage from "../assets/button-software.svg";
-import { createComponent } from "@vue/composition-api";
+import { createComponent } from "vue-function-api";
 
 export default createComponent({
     components: {
@@ -49,20 +42,11 @@ export default createComponent({
 
     @media (max-width: 600px) {
         grid-template-columns: auto;
-        padding-inline: 20px;
 
-        & .account-tile-button {
+        & * {
             width: 100%;
         }
     }
-}
-
-.ribbon-container {
-    align-items: stretch;
-    display: flex;
-    overflow: hidden;
-    padding: 0;
-    position: relative;
 }
 
 .account-tile-button:last-child {
@@ -70,23 +54,5 @@ export default createComponent({
     &:focus {
         background-color: var(--color-sunkist-coral);
     }
-}
-
-/* TODO: Remove below css when hardware option is ready */
-.coming-soon {
-    background-color: var(--color-lightish-red);
-    border: 4px double var(--color-white);
-    color: var(--color-white);
-    font-size: 12px;
-    font-weight: 600;
-    margin-block-start: 25px;
-    margin-inline-start: -45px;
-    padding: 5px 40px;
-    position: absolute;
-    text-rendering: geometricPrecision;
-    transform: perspective(1px) rotate(-45deg);
-    transform-origin: center;
-    user-select: none;
-    z-index: 1;
 }
 </style>

@@ -1,81 +1,48 @@
 <template>
-    <div class="modal-request-to-create-account">
-        <Modal
-            :is-open="isOpen"
-            :large="false"
-            not-closable
-            :title="$t('modalRequestToCreateAccount.title')"
-            @change="this.$listeners.change"
-        >
-            <div class="instructions">
-                <div>
-                    {{ $t("modalRequestToCreateAccount.provideYourPublicKey") }}
-                </div>
-                <div>
-                    {{
-                        $t(
-                            "modalRequestToCreateAccount.theyMustCreateAndFundYourAccount"
-                        )
-                    }}
-                </div>
+    <Modal
+        :is-open="isOpen"
+        :large="false"
+        title="Request to Create Account"
+        @change="this.$listeners.change"
+    >
+        <div class="modal-contents">
+            <qrcode-vue
+                :value="publicKey || 'null'"
+                size="180"
+                level="L"
+                class="pub-qr"
+            />
+
+            <ReadOnlyInput class="key-input" :value="publicKey" />
+
+            <Button
+                compact
+                label="Copy"
+                class="modal-button"
+                @click="handleClickCopy"
+            />
+
+            <div class="link-container">
+                <span class="link" @click="handleHasAccount"
+                    >Already have an Account ID?</span
+                >
             </div>
-
-            <form
-                class="request-to-create-account"
-                @submit.prevent="$emit('submit')"
-            >
-                <qrcode-vue
-                    v-if="publicKey"
-                    :value="publicKey.toString()"
-                    size="180"
-                    level="L"
-                    class="pub-qr"
-                />
-
-                <ReadOnlyInput
-                    v-if="publicKey"
-                    multiline
-                    :value="publicKey.toString()"
-                />
-
-                <div class="buttons">
-                    <Button
-                        compact
-                        outline
-                        :label="$t('modalRequestToCreateAccount.copyPublicKey')"
-                        class="button"
-                        @click="handleClickCopy"
-                    />
-                    <Button
-                        compact
-                        :label="
-                            $t('modalRequestToCreateAccount.iHaveAnAccountId')
-                        "
-                        class="button"
-                        @click="handleHasAccount"
-                    />
-                </div>
-            </form>
-        </Modal>
-    </div>
+        </div>
+    </Modal>
 </template>
 
 <script lang="ts">
-import Modal from "../components/Modal.vue";
-import TextInput from "../components/TextInput.vue";
-import Button from "../components/Button.vue";
-import { createComponent, PropType } from "@vue/composition-api";
+import Modal from "@/components/Modal.vue";
+import TextInput from "@/components/TextInput.vue";
+import Button from "@/components/Button.vue";
+import { createComponent, PropType } from "vue-function-api";
 import QrcodeVue from "qrcode.vue";
-import { writeToClipboard } from "../clipboard";
-import ReadOnlyInput from "../components/ReadOnlyInput.vue";
-import Warning from "../components/Warning.vue";
-import { ALERT } from "../store/actions";
-import store from "../store";
+import { writeToClipboard } from "@/clipboard";
+import ReadOnlyInput from "@/components/ReadOnlyInput.vue";
 
 interface Props {
     isOpen: boolean;
-    publicKey: import("@hashgraph/sdk").Ed25519PublicKey;
-    event: string;
+    event: "change";
 }
 
 export default createComponent({
@@ -84,8 +51,7 @@ export default createComponent({
         TextInput,
         Button,
         QrcodeVue,
-        ReadOnlyInput,
-        Warning
+        ReadOnlyInput
     },
     model: {
         prop: "isOpen",
@@ -93,18 +59,18 @@ export default createComponent({
     },
     props: {
         isOpen: (Boolean as unknown) as PropType<boolean>,
-        publicKey: (Object as unknown) as PropType<
-            import("@hashgraph/sdk").Ed25519PublicKey
-        >,
+        publicKey: (String as unknown) as PropType<string>,
         event: (String as unknown) as PropType<string>
     },
-    setup(props: Props, context) {
-        async function handleClickCopy(): Promise<void> {
-            await writeToClipboard(props.publicKey.toString());
-            await store.dispatch(ALERT, { message: "Copied", level: "info" });
+    setup(props, context) {
+        async function handleClickCopy() {
+            const key = props.publicKey;
+            if (key != null) {
+                await writeToClipboard(key);
+            }
         }
 
-        function handleHasAccount(): void {
+        function handleHasAccount() {
             context.emit("hasAccount");
         }
 
@@ -117,47 +83,36 @@ export default createComponent({
 </script>
 
 <style lang="postcss" scoped>
-.button {
-    width: 213px;
-
-    @media (max-width: 425px) {
-        width: 100%;
-
-        &:first-child {
-            margin-block-end: 15px;
-        }
-    }
-}
-
-.request-to-create-account {
+.modal-contents {
     align-items: center;
     display: flex;
     flex-direction: column;
 }
 
-.instructions {
-    color: var(--color-china-blue);
-    font-size: 14px;
-
-    & div {
-        padding-block-end: 15px;
-    }
+.modal-button {
+    margin-block-start: 20px;
 }
 
-.pub-qr {
-    padding-block-end: 40px;
-    padding-block-start: 25px;
-}
-
-.buttons {
-    display: flex;
-    justify-content: space-between;
+.key-input {
     margin-block-start: 40px;
-    width: 100%;
+}
 
-    @media (max-width: 425px) {
-        align-items: center;
-        flex-direction: column;
+.link-container {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    margin-block-start: 20px;
+}
+
+.link {
+    color: var(--color-china-blue);
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+        text-decoration: underline;
     }
 }
 </style>

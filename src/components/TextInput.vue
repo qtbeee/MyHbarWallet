@@ -5,59 +5,52 @@
 
             <span class="input-container">
                 <span v-if="prefix" class="prefix">{{ prefix }}</span>
+
                 <span class="input-wrapper">
-                    <div class="flex-container">
-                        <div class="text-flex-item">
-                            <textarea
-                                v-if="multiline"
-                                class="text-area"
-                                :placeholder="placeholder"
-                                :tabindex="tabindex"
-                                :value="value"
-                                :rows="rows"
-                                :class="{ resize: resizable }"
-                                @focusin="handleFocusIn"
-                                @focusout="handleFocusOut"
-                                @input="handleInput"
-                            />
-                            <input
-                                v-else
-                                ref="input"
-                                :value="value"
-                                :placeholder="placeholder"
-                                :type="keyboardType"
-                                :tabindex="tabindex"
-                                :step="step"
-                                :min="min"
-                                :autocomplete="
-                                    autocompleteDisabled ? 'off' : 'on'
-                                "
-                                @focusin="handleFocusIn"
-                                @focusout="handleFocusOut"
-                                @input="handleInput"
-                            />
-                        </div>
+                    <textarea
+                        v-if="multiline"
+                        class="text-area"
+                        :placeholder="placeholder"
+                        :tabindex="tabindex"
+                        :value="value"
+                        :rows="rows"
+                        :class="{ resize: resizable }"
+                        @focusin="handleFocusIn"
+                        @focusout="handleFocusOut"
+                        @input="handleInput"
+                    />
+                    <input
+                        v-else
+                        ref="input"
+                        :value="value"
+                        :placeholder="placeholder"
+                        :type="keyboardType"
+                        :tabindex="tabindex"
+                        :step="step"
+                        :min="min"
+                        @focusin="handleFocusIn"
+                        @focusout="handleFocusOut"
+                        @input="handleInput"
+                    />
 
-                        <div class="deco-flex-item">
-                            <span v-if="hasDecorations" class="decorations">
-                                <MaterialDesignIcon
-                                    v-if="obscure"
-                                    class="eye"
-                                    :class="{ 'is-open': state.isEyeOpen }"
-                                    :icon="eye"
-                                    @click="handleClickEye"
-                                />
+                    <span v-if="hasDecorations" class="decorations">
+                        <MaterialDesignIcon
+                            v-if="obscure"
+                            class="eye"
+                            :class="{ 'is-open': isEyeOpen }"
+                            :icon="eye"
+                            @click="handleClickEye"
+                        />
 
-                                <MaterialDesignIcon
-                                    v-else-if="showValidation"
-                                    class="checkmark"
-                                    :class="{ 'is-valid': valid }"
-                                    :icon="mdiCheckCircle"
-                                />
-                            </span>
-                        </div>
-                    </div>
+                        <MaterialDesignIcon
+                            v-else-if="showValidation"
+                            class="checkmark"
+                            :class="{ 'is-valid': valid }"
+                            :icon="mdiCheckCircle"
+                        />
+                    </span>
                 </span>
+
                 <span v-if="suffix" class="suffix">{{ suffix }}</span>
             </span>
         </label>
@@ -67,10 +60,10 @@
                 {{ action }}
             </div>
             <div v-if="canClear" class="action" @click="handleClickClear">
-                {{ $t("common.clear") }}
+                Clear
             </div>
             <div v-if="canCopy" class="action" @click="handleClickCopy">
-                {{ $t("common.copy") }}
+                Copy
             </div>
         </div>
 
@@ -81,17 +74,16 @@
 </template>
 
 <script lang="ts">
-import MaterialDesignIcon from "../components/MaterialDesignIcon.vue";
+import MaterialDesignIcon from "@/components/MaterialDesignIcon.vue";
 import { mdiEye, mdiEyeOutline, mdiCheckCircle } from "@mdi/js";
 import {
     createComponent,
-    Ref,
+    value,
     computed,
     PropType,
-    ref,
-    reactive
-} from "@vue/composition-api";
-import { writeToClipboard } from "../clipboard";
+    Wrapper
+} from "vue-function-api";
+import { writeToClipboard } from "@/clipboard";
 
 interface Props {
     placeholder: string;
@@ -107,7 +99,6 @@ interface Props {
     obscure: boolean;
     canClear: boolean;
     canCopy: boolean;
-    autocompleteDisabled: boolean;
     showValidation: boolean;
     valid: boolean;
     error: string;
@@ -118,23 +109,20 @@ interface Props {
 }
 
 export interface Component {
-    input: Ref<HTMLInputElement | null>;
-    state: {
-        isEyeOpen: boolean;
-    };
-    keyboardType: Ref<string>;
-    eye: Ref<string>;
+    isEyeOpen: Wrapper<boolean>;
+    keyboardType: Wrapper<string>;
+    eye: Wrapper<string>;
     mdiCheckCircle: string;
-    classObject: Ref<{ [key: string]: boolean }>;
+    classObject: Wrapper<{ [key: string]: boolean }>;
     focus: () => void;
-    rows: Ref<number>;
+    rows: Wrapper<number>;
     handleClickEye: () => void;
     handleInput: (event: Event) => void;
     handleClickCopy: () => void;
     handleClickClear: () => void;
     handleFocusIn: () => void;
     handleFocusOut: () => void;
-    hasDecorations: Ref<boolean>;
+    hasDecorations: Wrapper<boolean>;
 }
 
 export default createComponent({
@@ -156,7 +144,6 @@ export default createComponent({
         resizable: (Boolean as unknown) as PropType<boolean>,
         canClear: (Boolean as unknown) as PropType<boolean>,
         canCopy: (Boolean as unknown) as PropType<boolean>,
-        autocompleteDisabled: (Boolean as unknown) as PropType<boolean>,
 
         // Whether to hide the text being edited (e.g., for passwords).
         obscure: (Boolean as unknown) as PropType<boolean>,
@@ -175,15 +162,13 @@ export default createComponent({
     },
     setup(props: Props, context): Component {
         // If the eye is open to show the obscured text anyway
-        const state = reactive({
-            isEyeOpen: false,
-            hasFocus: false
-        });
-        const input = ref<HTMLInputElement | null>(null);
+        const isEyeOpen = value(false);
+
+        const hasFocus = value(false);
 
         const keyboardType = computed(() => {
             if (props.type) return props.type;
-            if (props.obscure && !state.isEyeOpen) return "password";
+            if (props.obscure && !isEyeOpen.value) return "password";
 
             return "text";
         });
@@ -191,7 +176,7 @@ export default createComponent({
         const rows = computed(() => (props.compact ? 2 : 8));
 
         const eye = computed(() => {
-            return state.isEyeOpen ? mdiEye : mdiEyeOutline;
+            return isEyeOpen.value ? mdiEye : mdiEyeOutline;
         });
 
         const hasDecorations = computed(
@@ -203,49 +188,46 @@ export default createComponent({
                 "is-compact": props.compact,
                 "is-white": props.white,
                 "is-multiline": props.multiline,
-                "has-focus": state.hasFocus,
+                "has-focus": hasFocus.value,
                 "has-label": props.label != null,
-                "has-error": props.error != null && props.error != "",
+                "has-error": props.error != null,
                 "has-prefix": props.prefix != null,
                 "has-suffix": props.suffix != null
             };
         });
 
-        function focus(): void {
-            if (input.value != null) {
-                input.value.focus();
-            }
+        function focus() {
+            (context.refs.input as HTMLInputElement).focus();
         }
 
-        function handleClickEye(): void {
-            state.isEyeOpen = !state.isEyeOpen;
+        function handleClickEye() {
+            isEyeOpen.value = !isEyeOpen.value;
             focus();
         }
 
-        function handleInput(event: Event): void {
+        function handleInput(event: Event) {
             const input = event.target as HTMLTextAreaElement;
-            context.emit("input", input.value, event);
+            context.emit("input", input.value);
         }
 
-        function handleClickClear(): void {
+        function handleClickClear() {
             context.emit("input", "");
         }
 
-        async function handleClickCopy(): Promise<void> {
+        async function handleClickCopy() {
             await writeToClipboard(props.value.toString());
         }
 
-        function handleFocusIn(): void {
-            state.hasFocus = true;
+        function handleFocusIn() {
+            hasFocus.value = true;
         }
 
-        function handleFocusOut(): void {
-            state.hasFocus = false;
+        function handleFocusOut() {
+            hasFocus.value = false;
         }
 
         return {
-            input,
-            state,
+            isEyeOpen,
             keyboardType,
             eye,
             mdiCheckCircle,
@@ -269,19 +251,6 @@ export default createComponent({
     border-radius: 4px;
     position: relative;
     width: 100%;
-}
-
-.flex-container {
-    display: flex;
-    flex-direction: row;
-}
-
-.text-flex-item {
-    flex-grow: 1;
-}
-
-.deco-flex-item {
-    flex-grow: 0;
 }
 
 .actions {
@@ -380,7 +349,7 @@ input[type="number"]::-webkit-inner-spin-button {
     height: 100%;
     inset-block-start: 0;
     inset-inline-end: 15px;
-    padding-inline-end: 20px;
+    position: absolute;
 }
 
 /* Compact */
@@ -434,21 +403,15 @@ input[type="number"]::-webkit-inner-spin-button {
     }
 }
 
-.prefix,
-.suffix {
-    align-items: center;
-    color: var(--color-basalt-grey);
-    display: flex;
-    flex-shrink: 0;
-    font-size: 14px;
-    padding: 0 14px;
-    white-space: nowrap;
-}
-
 /* Has Suffix */
 .text-input.has-suffix {
-    & .suffix {
-        border-left: 1px solid var(--color-jupiter);
+    & input,
+    & textarea {
+        border-right: 1px solid var(--color-jupiter);
+    }
+
+    & .decorations {
+        /* TODO Fix */
     }
 }
 
@@ -458,6 +421,17 @@ input[type="number"]::-webkit-inner-spin-button {
         align-items: flex-end;
         padding-block-end: 15px;
     }
+}
+
+.prefix,
+.suffix {
+    align-items: center;
+    color: var(--color-basalt-grey);
+    display: flex;
+    flex-shrink: 0;
+    font-size: 14px;
+    padding: 0 14px;
+    white-space: nowrap;
 }
 
 .eye {

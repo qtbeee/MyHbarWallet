@@ -1,36 +1,41 @@
 <template>
     <Modal
         :is-open="isOpen"
-        :title="$t('modalCreateWithSoftware.title')"
+        title="Create with Software"
         @change="this.$listeners.change"
     >
         <template v-slot:banner>
             <Warning />
         </template>
         <template>
-            <form
-                class="modal-access-by-software"
-                @submit.prevent="$emit('submit', state.optionSelected)"
-            >
+            <div class="modal-access-by-software">
                 <RadioButtonGroup
-                    v-model="state.optionSelected"
+                    v-model="optionSelected"
                     name="software-access-option"
                     :options="options"
                 />
-                <!--'Support coming soon!' note? -->
-                <PurchaseWalletLink></PurchaseWalletLink>
+                <div class="hardware-link">
+                    <div>
+                        Purchase a hardware wallet for the highest security when
+                        accessing your crypto.
+                    </div>
+                    <router-link :to="{ name: 'hardware-wallet-affiliates' }">
+                        Purchase a hardware wallet....
+                    </router-link>
+                </div>
                 <Button
-                    :disabled="state.optionSelected == null"
-                    :label="$t('common.continue')"
+                    :disabled="optionSelected == null"
+                    label="Continue"
+                    @click="$emit('submit', optionSelected)"
                 />
                 <CustomerSupportLink class="support-link" />
-            </form>
+            </div>
         </template>
     </Modal>
 </template>
 
 <script lang="ts">
-import { createComponent, reactive, watch } from "@vue/composition-api";
+import { createComponent, value, Wrapper } from "vue-function-api";
 import Button from "../components/Button.vue";
 import RadioButtonGroup from "../components/RadioButtonGroup.vue";
 import imagePhrase from "../assets/button-phrase.svg";
@@ -38,15 +43,10 @@ import imageFile from "../assets/button-file.svg";
 import Modal from "../components/Modal.vue";
 import Warning from "../components/Warning.vue";
 import CustomerSupportLink from "../components/CustomerSupportLink.vue";
-import PurchaseWalletLink from "../components/PurchaseWalletLink.vue";
 
 export enum CreateSoftwareOption {
     File = "file",
     Phrase = "phrase"
-}
-
-interface State {
-    optionSelected: CreateSoftwareOption | null;
 }
 
 export default createComponent({
@@ -55,8 +55,7 @@ export default createComponent({
         Button,
         Modal,
         CustomerSupportLink,
-        Warning,
-        PurchaseWalletLink
+        Warning
     },
     model: {
         prop: "isOpen",
@@ -65,10 +64,10 @@ export default createComponent({
     props: {
         isOpen: { type: Boolean }
     },
-    setup(props: { isOpen: boolean }) {
-        const state = reactive<State>({
-            optionSelected: null
-        });
+    setup() {
+        const optionSelected: Wrapper<CreateSoftwareOption | null> = value(
+            null
+        );
 
         const options = [
             {
@@ -83,17 +82,8 @@ export default createComponent({
             }
         ];
 
-        watch(
-            () => props.isOpen,
-            (newVal: boolean) => {
-                if (newVal) {
-                    state.optionSelected = null;
-                }
-            }
-        );
-
         return {
-            state,
+            optionSelected,
             options
         };
     }

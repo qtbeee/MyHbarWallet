@@ -1,10 +1,5 @@
 <template>
-    <div
-        ref="ttEl"
-        class="tooltip-container"
-        :class="{ active }"
-        @click.stop=""
-    >
+    <div class="tooltip-container" :class="{ active }" @click.stop="">
         <div
             class="slot-container"
             @click="handleTogglePinned"
@@ -22,73 +17,50 @@
 <script lang="ts">
 import {
     computed,
-    onBeforeMount,
-    reactive,
-    createComponent,
-    SetupContext
-} from "@vue/composition-api";
-
-interface Props {
-    message: string;
-    pinnable: boolean;
-}
-
-type Context = SetupContext & {
-    refs: {
-        ttEl: HTMLElement;
-    };
-};
+    onBeforeDestroy,
+    onCreated,
+    value,
+    createComponent
+} from "vue-function-api";
 
 export default createComponent({
     props: {
         message: { type: String, required: true },
         pinnable: { type: Boolean, required: false }
     },
-    setup(props: Props, context) {
-        const state = reactive({
-            hovered: false,
-            pinned: false
-        });
+    setup(props) {
+        // data
+        const hovered = value(false);
+        const pinned = value(false);
 
         // computed
         const active = computed((): boolean => {
             if (!props.pinnable) {
-                return state.hovered;
+                return hovered.value;
             } else {
-                return state.hovered || state.pinned;
+                return hovered.value || pinned.value;
             }
         });
 
         // methods
-        function handleMouseOver(): void {
-            state.hovered = true;
-        }
+        const handleMouseOver = () => {
+            hovered.value = true;
+        };
+        const handleMouseOut = () => {
+            hovered.value = false;
+        };
+        const handleTogglePinned = () => {
+            pinned.value = !pinned.value;
+        };
+        const handleCloseOnWindowClick = () => {
+            pinned.value = false;
+        };
 
-        function handleMouseOut(): void {
-            state.hovered = false;
-        }
-
-        function handleTogglePinned(): void {
-            state.pinned = !state.pinned;
-            getPosition();
-        }
-
-        function handleCloseOnWindowClick(): void {
-            state.pinned = false;
-        }
-
-        function getPosition(): void {
-            const tt = (context as Context).refs.ttEl;
-            if (tt) {
-                const curleft = tt.getBoundingClientRect().left;
-                if (curleft > 2 * (window.innerWidth / 3))
-                    tt.classList.add("on-right");
-            }
-        }
-
-        window.addEventListener("click", handleCloseOnWindowClick);
-
-        onBeforeMount(() => {
+        // lifecycle
+        onCreated(() => {
+            window.addEventListener("click", handleCloseOnWindowClick);
+        });
+        onBeforeDestroy(() => {
             window.removeEventListener("click", handleCloseOnWindowClick);
         });
 
@@ -163,21 +135,5 @@ export default createComponent({
 .tooltip-container.active .message {
     opacity: 1;
     pointer-events: all;
-}
-
-/* TODO: below may need refactor if we use these elsewhere */
-
-@media (max-width: 600px) {
-    .on-right .message {
-        inset-inline-start: -50px;
-
-        &::before {
-            inset-inline-start: 123px;
-        }
-
-        &::after {
-            inset-inline-start: 123px;
-        }
-    }
 }
 </style>

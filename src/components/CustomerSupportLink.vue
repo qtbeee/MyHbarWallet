@@ -1,35 +1,29 @@
 <template>
-    <div class="customer-support-link">
-        <div class="customer-support-container" @click="handleButtonClick">
-            <img alt="" :src="serviceBell" />{{
-                $t("customerSupport.customerSupport")
-            }}
-        </div>
-        <ModalCustomerService v-model="state.modalCustomerServiceIsOpen" />
+    <div class="customer-support-link" @click="handleButtonClick">
+        <img alt="" :src="serviceBell" /> Customer Support
+        <ModalCustomerService v-model="modalCustomerServiceIsOpen" />
     </div>
 </template>
 
 <script lang="ts">
-import serviceBell from "../assets/help-center.svg";
-import { createComponent, reactive } from "@vue/composition-api";
+import serviceBell from "@/assets/help-center.svg";
+import { createComponent, value } from "vue-function-api";
 
-import ModalCustomerService from "../components/ModalCustomerService.vue";
+import ModalCustomerService from "@/components/ModalCustomerService.vue";
 
 export default createComponent({
     components: {
         ModalCustomerService
     },
     setup() {
-        const state = reactive({
-            modalCustomerServiceIsOpen: false
-        });
+        const modalCustomerServiceIsOpen = value(false);
 
-        function handleButtonClick(): void {
-            state.modalCustomerServiceIsOpen = !state.modalCustomerServiceIsOpen;
+        function handleButtonClick() {
+            modalCustomerServiceIsOpen.value = !modalCustomerServiceIsOpen.value;
         }
 
         return {
-            state,
+            modalCustomerServiceIsOpen,
             serviceBell,
             handleButtonClick
         };
@@ -38,14 +32,13 @@ export default createComponent({
 </script>
 
 <style lang="postcss" scoped>
-.customer-support-container {
+.customer-support-link {
     align-items: center;
     align-self: center;
     color: var(--color-melbourne-cup);
     cursor: pointer;
     display: flex;
     font-size: 14px;
-    justify-content: center;
     text-align: center;
 
     &:hover,

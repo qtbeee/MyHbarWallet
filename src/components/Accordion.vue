@@ -1,5 +1,5 @@
 <template>
-    <div class="accordion" :class="{ expanded: state.expanded }">
+    <div class="accordion" :class="{ expanded }">
         <div class="title" @click="toggle">
             <div class="title-text">
                 <slot name="title"></slot>
@@ -15,8 +15,8 @@
 </template>
 
 <script lang="ts">
-import { reactive, createComponent } from "@vue/composition-api";
-import MaterialDesignIcon from "../components/MaterialDesignIcon.vue";
+import { value, createComponent } from "vue-function-api";
+import MaterialDesignIcon from "@/components/MaterialDesignIcon.vue";
 import { mdiChevronUp } from "@mdi/js";
 
 export default createComponent({
@@ -24,14 +24,12 @@ export default createComponent({
         MaterialDesignIcon
     },
     setup() {
-        const state = reactive({ expanded: false });
-
-        function toggle(): void {
-            state.expanded = !state.expanded;
-        }
-
+        const expanded = value(false);
+        const toggle = () => {
+            expanded.value = !expanded.value;
+        };
         return {
-            state,
+            expanded,
             mdiChevronUp,
             toggle
         };
@@ -84,11 +82,12 @@ a {
 .content {
     font-size: 14px;
     font-weight: 400;
-    height: max-content;
+    height: auto;
+    max-height: 50em;
     overflow: hidden;
 
     /* stylelint-disable-next-line plugin/no-low-performance-animation-properties */
-    transition: 0.3s;
+    transition: max-height 0.3s linear;
 
     @media (prefers-reduced-motion) {
         transition: none;
@@ -97,18 +96,9 @@ a {
 
 .accordion:not(.expanded) .content {
     max-height: 0;
-    padding-block-start: 0;
-}
-
-.accordion.expanded .content {
-    max-height: 200px;
-    padding-block-start: 20px;
 }
 
 .content-text {
-    background-color: var(--color-peral);
-    border: 1px solid var(--color-boysenberry-shadow);
-    border-radius: 5px;
-    padding: 20px;
+    padding-block-start: 20px;
 }
 </style>

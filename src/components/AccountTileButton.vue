@@ -14,7 +14,7 @@
 </template>
 
 <script lang="ts">
-import { createComponent } from "@vue/composition-api";
+import { createComponent } from "vue-function-api";
 
 export default createComponent({
     props: {
@@ -86,7 +86,7 @@ export default createComponent({
     }
 
     &.disabled {
-        filter: blur(0.5px);
+        filter: blur(2px);
         opacity: 0.5;
         pointer-events: none;
     }

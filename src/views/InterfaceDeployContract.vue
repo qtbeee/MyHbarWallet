@@ -1,38 +1,35 @@
 <template>
-    <InterfaceForm :title="$t('interfaceContractDeploy.title')">
+    <InterfaceForm title="Deploy Contract">
         <TextInput
             compact
             can-copy
             can-clear
             multiline
-            :label="$t('interfaceContractDeploy.byteCode')"
+            label="Byte Code"
             class="deploy-contract-form-item"
             show-validation
-            :valid="state.byteCodeIsValid"
+            :valid="byteCodeIsValid"
         />
 
         <TextInput
             can-copy
             can-clear
             multiline
-            :label="'ABI/JSON' + $t('interfaceContractDeploy.interface')"
+            label="ABI/JSON Interface"
             class="deploy-contract-form-item"
             show-validation
-            :valid="state.interfaceIsValid"
+            :valid="interfaceIsValid"
         />
 
         <TextInput
-            :label="$t('interfaceContractDeploy.maximumTransactionFee')"
+            label="Maximum Transaction Fee"
             class="deploy-contract-form-item"
             show-validation
-            :valid="state.maxFeeIsValid"
+            :valid="maxFeeIsValid"
         />
 
         <template v-slot:footer>
-            <Button
-                :disabled="!signable"
-                :label="$t('interfaceContractDeploy.signTransaction')"
-            />
+            <Button :disabled="!signable" label="Sign Transaction" />
         </template>
     </InterfaceForm>
 </template>
@@ -42,13 +39,7 @@ import InterfaceForm from "../components/InterfaceForm.vue";
 import TextInput from "../components/TextInput.vue";
 import Button from "../components/Button.vue";
 
-import { createComponent, reactive, computed } from "@vue/composition-api";
-
-interface State {
-    byteCodeIsValid: boolean;
-    interfaceIsValid: boolean;
-    maxFeeIsValid: boolean;
-}
+import { createComponent, value as vueValue, computed } from "vue-function-api";
 
 export default createComponent({
     components: {
@@ -57,20 +48,18 @@ export default createComponent({
         Button
     },
     setup() {
-        const state = reactive<State>({
-            byteCodeIsValid: false,
-            interfaceIsValid: false,
-            maxFeeIsValid: false
-        });
+        const byteCodeIsValid = vueValue(false);
+        const interfaceIsValid = vueValue(false);
+        const maxFeeIsValid = vueValue(false);
 
         const signable = computed(
             (): boolean =>
-                state.byteCodeIsValid &&
-                state.interfaceIsValid &&
-                state.maxFeeIsValid
+                byteCodeIsValid.value &&
+                interfaceIsValid.value &&
+                maxFeeIsValid.value
         );
 
-        return { state, signable };
+        return { byteCodeIsValid, interfaceIsValid, maxFeeIsValid, signable };
     }
 });
 </script>

@@ -15,7 +15,7 @@
 <script lang="ts">
 import MaterialDesignIcon from "./MaterialDesignIcon.vue";
 import { mdiMinus } from "@mdi/js";
-import { createComponent, PropType, SetupContext } from "@vue/composition-api";
+import { createComponent, PropType } from "vue-function-api";
 
 interface Props {
     isOpen: boolean;
@@ -28,7 +28,7 @@ export default createComponent({
     props: {
         isOpen: (Boolean as unknown) as PropType<boolean>
     },
-    setup(props: Props, context: SetupContext) {
+    setup(props: Props, context) {
         const icon = mdiMinus;
 
         function style(ind: string): string {
@@ -37,7 +37,6 @@ export default createComponent({
 
         function handleToggle(): void {
             context.emit("toggle", !props.isOpen);
-            document.body.classList.toggle("ham-menu-is-open", !props.isOpen);
         }
 
         return {
@@ -54,7 +53,7 @@ export default createComponent({
     border-color: var(--color-white);
     border-radius: 50%;
     cursor: pointer;
-    inset-inline-end: 15px;
+    inset-inline-end: 0;
     max-height: 40px;
     min-width: 40px;
     overflow: hidden;
@@ -94,7 +93,7 @@ export default createComponent({
 }
 
 .bar-1-anim {
-    transform: rotate(45deg) translate(19.75px, 4px) scaleX(1.75) scaleY(2);
+    transform: rotate(45deg) translate(20px, 4px) scaleX(1.75) scaleY(2);
     transition: transform 0.2s linear;
 
     @media (prefers-reduced-motion) {
@@ -103,9 +102,7 @@ export default createComponent({
 }
 
 .bar-2-anim {
-    transform:
-        rotate(-45deg) translate(26.5px, -13.625px) scaleX(1.75)
-        scaleY(2);
+    transform: rotate(-45deg) translate(25.5px, -13px) scaleX(1.75) scaleY(2);
     transition: transform 0.2s linear;
 
     @media (prefers-reduced-motion) {

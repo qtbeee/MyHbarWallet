@@ -25,16 +25,11 @@
 </template>
 
 <script lang="ts">
-import {
-    createComponent,
-    PropType,
-    computed,
-    SetupContext
-} from "@vue/composition-api";
-import MaterialDesignIcon from "../components/MaterialDesignIcon.vue";
+import { createComponent, PropType, computed } from "vue-function-api";
+import MaterialDesignIcon from "@/components/MaterialDesignIcon.vue";
 import { mdiChevronDown, mdiChevronUp } from "@mdi/js";
-import store from "../store";
-import { SET_INTERFACE_MENU_IS_OPEN } from "../store/mutations";
+import store from "@/store";
+import { SET_INTERFACE_MENU_IS_OPEN } from "@/store/mutations";
 
 interface InterfaceNavigationItem {
     name: string;
@@ -48,12 +43,6 @@ interface Props {
     routes: InterfaceNavigationItem[];
 }
 
-// Yes, it is used
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function handleClick(): void {
-    store.commit(SET_INTERFACE_MENU_IS_OPEN, false);
-}
-
 export default createComponent({
     components: {
         MaterialDesignIcon
@@ -65,39 +54,32 @@ export default createComponent({
         routes: (Array as unknown) as PropType<InterfaceNavigationItem[]>
     },
     watch: {},
-    setup(props: Props, context: SetupContext) {
+    setup(props: Props, context) {
         const isSectionActive = computed(() =>
-            props.routes.some(
-                route =>
-                    route.name ===
-                    (context.root.$route == undefined
-                        ? null
-                        : context.root.$route.name)
-            )
+            props.routes.some(route => route.name === context.root.$route.name)
         );
 
-        function handleHeaderClick(): void {
+        function handleHeaderClick() {
             const firstRoute = props.routes[0];
 
             // If the first route is active, do nothing
-            if (
-                firstRoute.name ===
-                (context.root.$route == undefined
-                    ? null
-                    : context.root.$route.name)
-            ) {
+            if (firstRoute.name === context.root.$route.name) {
                 return;
             }
 
             context.root.$router.push({ name: firstRoute.name });
         }
 
+        function handleClick() {
+            store.commit(SET_INTERFACE_MENU_IS_OPEN, false);
+        }
+
         return {
             isSectionActive,
             mdiChevronUp,
             mdiChevronDown,
-            handleClick,
-            handleHeaderClick
+            handleHeaderClick,
+            handleClick
         };
     }
 });

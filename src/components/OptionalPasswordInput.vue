@@ -2,11 +2,11 @@
     <div class="password-container">
         <div class="header">
             <div class="text">
-                {{ $t("common.password.password") }}
+                Password
             </div>
             <div class="password-switch">
                 <div class="text">
-                    {{ $t("common.optional") }}
+                    Optional
                 </div>
                 <SwitchButton
                     v-model="showPassword"
@@ -19,7 +19,7 @@
             <TextInput
                 ref="input"
                 :value="value"
-                :placeholder="$t('optionalPasswordInput.pleaseEnterPassword')"
+                placeholder="Please Enter Password"
                 obscure
                 compact
                 :tabindex="showPassword ? null : '-1'"
@@ -33,16 +33,16 @@
 </template>
 
 <script lang="ts">
-import { createComponent, reactive } from "@vue/composition-api";
-import { SetupContext } from "@vue/composition-api/dist/types/vue";
+import { createComponent, value } from "vue-function-api";
+import { SetupContext } from "vue-function-api/dist/types/vue";
 import TextInput from "../components/TextInput.vue";
 import SwitchButton from "../components/SwitchButton.vue";
 
-interface Context extends SetupContext {
+type Context = SetupContext & {
     refs: {
         input: HTMLInputElement;
     };
-}
+};
 
 export default createComponent({
     components: {
@@ -54,19 +54,17 @@ export default createComponent({
         passwordWarning: { type: String, default: null }
     },
     setup(props, context) {
-        const showPassword = reactive(false);
+        const showPassword = value(false);
 
-        function handleInput(password: string): void {
+        function handleInput(password: string) {
             context.emit("input", password);
         }
 
-        function handleChangeShowPassword(showPassword: boolean): void {
+        function handleChangeShowPassword(showPassword: boolean) {
             if (showPassword) {
                 // If we are now showing the password,
                 // focus the password input
-                if (((context as unknown) as Context).refs.input != undefined) {
-                    ((context as unknown) as Context).refs.input.focus();
-                }
+                (context as Context).refs.input.focus();
             }
         }
 

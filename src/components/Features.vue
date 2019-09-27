@@ -2,17 +2,12 @@
     <div class="features">
         <div class="wrap">
             <div class="feature-grid">
-                <Feature
-                    :image="wallet"
-                    :title="$t('features.joinMyHbarWallet')"
-                >
-                    {{ $t("features.accessHederaTm") }}
+                <Feature :image="wallet" title="Join MyHederaWallet">
+                    Access Hedera Hashgraph's most-trusted wallet client.
                 </Feature>
-                <Feature
-                    :image="hardware"
-                    :title="$t('features.hardwareWalletSupport')"
-                >
-                    {{ $t("features.mhwCurrentlyOffersSupportFor") }}
+                <Feature :image="hardware" title="Hardware Wallet Support">
+                    MHW currently offers support for only Trezor but all major
+                    hardware wallets are on the roadmap to be supported.
                 </Feature>
             </div>
         </div>
@@ -20,10 +15,10 @@
 </template>
 
 <script lang="ts">
-import Feature from "../components/Feature.vue";
+import Feature from "@/components/Feature.vue";
 import wallet from "../assets/icon-wallet.svg";
 import hardware from "../assets/icon-hardware.svg";
-import { createComponent } from "@vue/composition-api";
+import { createComponent } from "vue-function-api";
 
 export default createComponent({
     components: {

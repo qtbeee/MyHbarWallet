@@ -1,16 +1,15 @@
 <template>
     <div
         class="modal-background"
-        :class="{ 'is-open': props.isOpen }"
+        :class="{ 'is-open': isOpen }"
         role="dialog"
         aria-modal="true"
-        @mousedown.self="handleClose"
+        @click="handleClose"
     >
-        <div class="modal" :class="{ large: props.large }">
-            <header v-if="!props.hideDecoration">
-                <span class="title">{{ props.title }}</span>
+        <div class="modal" :class="{ large: large }" @click.stop="">
+            <header v-if="!hideDecoration">
+                <span class="title">{{ title }}</span>
                 <MaterialDesignIcon
-                    v-if="!props.notClosable"
                     class="close"
                     :icon="mdiClose"
                     @click="handleClose"
@@ -30,34 +29,29 @@
 import {
     createComponent,
     watch,
-    onUnmounted,
-    SetupContext,
-    onMounted
-} from "@vue/composition-api";
+    PropType,
+    onCreated,
+    onBeforeDestroy
+} from "vue-function-api";
 import { mdiClose } from "@mdi/js";
-import MaterialDesignIcon from "../components/MaterialDesignIcon.vue";
+import MaterialDesignIcon from "@/components/MaterialDesignIcon.vue";
 
-const modalIds: number[] = [];
-let nextModalId = 0;
-
-function modalIsTop(id: number): boolean {
-    return modalIds[modalIds.length - 1] === id;
+function setModalIsOpenOnBody(isOpen: boolean) {
+    document.body.classList.toggle("modal-is-open", isOpen);
 }
 
-function setModalIsOpenOnBody(): void {
-    document.body.classList.toggle("modal-is-open", modalIds.length !== 0);
+interface Props {
+    notClosable: boolean;
+    isOpen: boolean;
+    title: string;
+    hideDecoration: boolean;
+    large: boolean;
 }
 
 // The isOpen property controls if the modal is open or not. It should be bound with
 // the v-model directive to allow the modal to close itself (click out and close button).
 export default createComponent({
-    props: {
-        notClosable: Boolean,
-        isOpen: Boolean,
-        title: String,
-        hideDecoration: Boolean,
-        large: Boolean
-    },
+    name: "Modal",
     components: {
         MaterialDesignIcon
     },
@@ -65,107 +59,44 @@ export default createComponent({
         prop: "isOpen",
         event: "change"
     },
-    setup(
-        props: {
-            notClosable: boolean;
-            isOpen: boolean;
-            title: string;
-            hideDecoration: boolean;
-            large: boolean;
-        },
-        context: SetupContext
-    ) {
-        const id = nextModalId++;
+    props: {
+        notClosable: (Boolean as unknown) as PropType<boolean>,
+        isOpen: (Boolean as unknown) as PropType<boolean>,
+        title: (String as unknown) as PropType<string>,
+        hideDecoration: (Boolean as unknown) as PropType<boolean>,
+        large: (Boolean as unknown) as PropType<boolean>
+    },
 
-        function handleClose(): void {
-            if (!props.notClosable && modalIsTop(id)) {
+    setup(props: Props, context) {
+        function handleClose() {
+            if (!props.notClosable) {
                 context.emit("change", false);
             }
         }
 
-        function handleWindowKeyDown(event: KeyboardEvent): void {
+        function handleWindowKeyDown(event: KeyboardEvent) {
             // ESCAPE (27)
-            if (!props.notClosable && props.isOpen && event.keyCode == 27) {
+            if (props.isOpen && event.keyCode == 27) {
                 handleClose();
             }
         }
 
-        function unregister(): void {
-            modalIds.splice(modalIds.indexOf(id), 1);
-        }
-
-        window.addEventListener("keydown", handleWindowKeyDown);
-
-        onMounted(() => {
-            const elModals = context.root.$el.querySelectorAll(".modal");
-            elModals.forEach(element => {
-                element.addEventListener(
-                    "touchstart",
-                    () => {
-                        if (element.scrollTop <= 0) {
-                            element.scrollTo(0, 1);
-                            return;
-                        }
-                        if (
-                            element.scrollTop + element.clientHeight >=
-                            element.scrollHeight
-                        ) {
-                            element.scrollTo(
-                                0,
-                                element.scrollHeight - element.clientHeight - 1
-                            );
-                        }
-                    },
-                    { passive: true }
-                );
-            });
+        onCreated(() => {
+            setModalIsOpenOnBody(props.isOpen);
+            window.addEventListener("keydown", handleWindowKeyDown);
         });
 
-        onUnmounted(() => {
-            unregister();
-            setModalIsOpenOnBody();
+        onBeforeDestroy(() => {
+            setModalIsOpenOnBody(false);
             window.removeEventListener("keydown", handleWindowKeyDown);
-            const elModals = context.root.$el.querySelectorAll(".modal");
-            elModals.forEach(element => {
-                element.removeEventListener("touchstart", () => {
-                    if (element.scrollTop <= 0) {
-                        element.scrollTo(0, 1);
-                        return;
-                    }
-                    if (
-                        element.scrollTop + element.clientHeight >=
-                        element.scrollHeight
-                    ) {
-                        element.scrollTo(
-                            0,
-                            element.scrollHeight - element.clientHeight - 1
-                        );
-                    }
-                });
-            });
         });
 
-        watch(
-            () => props.isOpen,
-            (isOpen: boolean, prevIsOpen: boolean) => {
-                const hasOpened = isOpen && !prevIsOpen;
-                const hasClosed = !isOpen && prevIsOpen;
-
-                if (hasOpened) {
-                    modalIds.push(id);
-                } else if (hasClosed) {
-                    unregister();
-                }
-
-                setModalIsOpenOnBody();
-            }
-        );
+        watch(() => props.isOpen, setModalIsOpenOnBody);
 
         return {
             mdiClose,
             handleClose,
-            handleWindowKeyDown,
-            props
+            handleWindowKeyDown
         };
     }
 });
@@ -190,14 +121,6 @@ export default createComponent({
         overflow-x: hidden;
         overflow-y: auto;
         pointer-events: all;
-
-        @media (max-width: 600px) {
-            padding: 0;
-        }
-
-        @supports (-webkit-overflow-scrolling: touch) {
-            background-color: var(--color-white);
-        }
     }
 
     @media screen and (prefers-reduced-motion: reduce) {
@@ -215,7 +138,6 @@ export default createComponent({
     margin: auto;
     max-width: 530px;
     overflow: hidden;
-    overflow-y: auto;
     transform: translateY(-50px);
     transition: transform 0.3s ease-out;
     width: 100%;
@@ -227,19 +149,6 @@ export default createComponent({
 
     @media print {
         box-shadow: none;
-    }
-
-    @media (max-width: 600px) {
-        background-color: var(--color-white);
-        border-radius: 0;
-        height: 100vh;
-        max-width: 600px;
-        width: 100vw;
-    }
-
-    @supports (-webkit-overflow-scrolling: touch) {
-        -webkit-overflow-scrolling: auto;
-        padding-block-end: 75px;
     }
 }
 
@@ -271,10 +180,6 @@ header {
 
 .main {
     background-color: var(--color-white);
-
-    @media (max-width: 600px) {
-        height: 100vh;
-    }
 }
 
 .close {

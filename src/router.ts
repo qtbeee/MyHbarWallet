@@ -1,12 +1,13 @@
-import Router, { Route } from "vue-router";
+import Vue from "vue";
+import Router from "vue-router";
 import Home from "./views/Home.vue";
 import AccessMyAccount from "./views/AccessMyAccount.vue";
 import CreateAccount from "./views/CreateAccount.vue";
 import HardwareWalletAffiliates from "./views/HardwareWalletAffiliates.vue";
-import InterfaceCreateAccount from "./views/InterfaceCreateAccount.vue";
+import PrivacyPolicy from "./views/PrivacyPolicy.vue";
+import InterfaceCreateAccount from "@/views/InterfaceCreateAccount.vue";
 import TermsConditions from "./views/TermsConditions.vue";
 import Error404 from "./views/Error404.vue";
-import PrivacyPolicy from "./views/PrivacyPolicy.vue";
 import { PositionResult } from "vue-router/types/router";
 import store from "./store";
 
@@ -22,8 +23,7 @@ function InterfaceSendTransfer(): Promise<
     typeof import("./views/InterfaceSendTransfer.vue")
 > {
     return import(
-        /* webpackChunkName: "interface" */
-        "./views/InterfaceSendTransfer.vue"
+        /* webpackChunkName: "interface" */ "./views/InterfaceSendTransfer.vue"
     );
 }
 
@@ -31,8 +31,7 @@ function InterfaceDeployContract(): Promise<
     typeof import("./views/InterfaceDeployContract.vue")
 > {
     return import(
-        /* webpackChunkName: "interface" */
-        "./views/InterfaceDeployContract.vue"
+        /* webpackChunkName: "interface" */ "./views/InterfaceDeployContract.vue"
     );
 }
 
@@ -40,8 +39,7 @@ function InterfaceInteractWithContract(): Promise<
     typeof import("./views/InterfaceInteractWithContract.vue")
 > {
     return import(
-        /* webpackChunkName: "interface" */
-        "./views/InterfaceInteractWithContract.vue"
+        /* webpackChunkName: "interface" */ "./views/InterfaceInteractWithContract.vue"
     );
 }
 
@@ -49,8 +47,7 @@ function InterfaceSignMessage(): Promise<
     typeof import("./views/InterfaceSignMessage.vue")
 > {
     return import(
-        /* webpackChunkName: "interface" */
-        "./views/InterfaceSignMessage.vue"
+        /* webpackChunkName: "interface" */ "./views/InterfaceSignMessage.vue"
     );
 }
 
@@ -58,20 +55,18 @@ function InterfaceVerifyMessage(): Promise<
     typeof import("./views/InterfaceVerifyMessage.vue")
 > {
     return import(
-        /* webpackChunkName: "interface" */
-        "./views/InterfaceVerifyMessage.vue"
+        /* webpackChunkName: "interface" */ "./views/InterfaceVerifyMessage.vue"
     );
 }
 
+Vue.use(Router);
+
 // auth function that redirects visitors who have not logged in back to the home route
 function RequireWallet(
-    _to: Route,
-    _from: Route,
-    next: {
-        (arg0: string): void;
-        (): void;
-    }
-): void {
+    _to: any,
+    _from: any,
+    next: { (arg0: string): void; (): void }
+) {
     if (store.state.wallet.session == null) {
         return next("/");
     }
@@ -123,9 +118,7 @@ export default new Router({
             beforeEnter: RequireWallet,
             component: Interface,
             name: "interface",
-            redirect: {
-                name: "send-transfer"
-            },
+            redirect: { name: "send-transfer" },
             children: [
                 {
                     path: "send-transfer",
@@ -172,17 +165,9 @@ export default new Router({
         }
 
         if (to.hash) {
-            // hash results were not quite right for mobile, this gives
-            // a 25 pixel buffer
-            return {
-                selector: to.hash,
-                offset: { x: 0, y: 25 }
-            };
+            return { selector: to.hash };
         }
 
-        return {
-            x: 0,
-            y: 0
-        };
+        return { x: 0, y: 0 };
     }
 });

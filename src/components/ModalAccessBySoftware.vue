@@ -1,33 +1,37 @@
 <template>
-    <div class="modal-access-by-software">
-        <Modal
-            :is-open="isOpen"
-            :title="$t('modalAccessBySoftware.title')"
-            @change="this.$listeners.change"
-        >
-            <template v-slot:banner>
-                <Warning />
-            </template>
-            <template>
-                <form
-                    class="modal-access-by-software"
-                    @submit.prevent="handleSubmit"
-                >
-                    <RadioButtonGroup
-                        v-model="state.optionSelected"
-                        name="software-access-option"
-                        :options="options"
-                    />
-                    <PurchaseWalletLink></PurchaseWalletLink>
-                    <Button
-                        :disabled="state.optionSelected == null"
-                        :label="$t('common.continue')"
-                    />
-                    <CustomerSupportLink class="support-link" />
-                </form>
-            </template>
-        </Modal>
-    </div>
+    <Modal
+        :is-open="isOpen"
+        title="Access by Software"
+        @change="this.$listeners.change"
+    >
+        <template v-slot:banner>
+            <Warning />
+        </template>
+        <template>
+            <div class="modal-access-by-software">
+                <RadioButtonGroup
+                    v-model="optionSelected"
+                    name="software-access-option"
+                    :options="options"
+                />
+                <div class="hardware-link">
+                    <div>
+                        Purchase a hardware wallet for the highest security when
+                        accessing your crypto.
+                    </div>
+                    <router-link :to="{ name: 'hardware-wallet-affiliates' }">
+                        Purchase a hardware wallet....
+                    </router-link>
+                </div>
+                <Button
+                    :disabled="optionSelected == null"
+                    label="Continue"
+                    @click="$emit('submit', optionSelected)"
+                />
+                <CustomerSupportLink class="support-link" />
+            </div>
+        </template>
+    </Modal>
 </template>
 
 <script lang="ts">
@@ -39,13 +43,7 @@ import imageFile from "../assets/button-file.svg";
 import Modal from "../components/Modal.vue";
 import Warning from "../components/Warning.vue";
 import CustomerSupportLink from "../components/CustomerSupportLink.vue";
-import PurchaseWalletLink from "../components/PurchaseWalletLink.vue";
-import {
-    createComponent,
-    reactive,
-    watch,
-    SetupContext
-} from "@vue/composition-api";
+import { createComponent, value } from "vue-function-api";
 
 export enum AccessSoftwareOption {
     File = "file",
@@ -59,8 +57,7 @@ export default createComponent({
         Button,
         Modal,
         CustomerSupportLink,
-        Warning,
-        PurchaseWalletLink
+        Warning
     },
     model: {
         prop: "isOpen",
@@ -69,10 +66,8 @@ export default createComponent({
     props: {
         isOpen: { type: Boolean }
     },
-    setup(props: { isOpen: boolean }, context: SetupContext) {
-        const state = reactive({
-            optionSelected: null
-        });
+    setup() {
+        const optionSelected = value(null);
 
         const options = [
             {
@@ -91,21 +86,7 @@ export default createComponent({
                 image: imageKey
             }
         ];
-
-        function handleSubmit(): void {
-            context.emit("submit", state.optionSelected);
-        }
-
-        watch(
-            () => props.isOpen,
-            (newVal: boolean) => {
-                if (newVal) {
-                    state.optionSelected = null;
-                }
-            }
-        );
-
-        return { state, options, handleSubmit };
+        return { optionSelected, options };
     }
 });
 </script>

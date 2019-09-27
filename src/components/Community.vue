@@ -3,10 +3,10 @@
         <div class="wrap">
             <div class="head">
                 <div class="title">
-                    {{ $t("community.joinMHWCommunity") }}
+                    Join MHW Community
                 </div>
                 <div class="subtitle">
-                    {{ $t("community.getInTheKnow") }}
+                    Get in the know and see your balance grow (we hope)!
                 </div>
             </div>
             <div class="icons">
@@ -41,13 +41,13 @@
 </template>
 
 <script lang="ts">
-import { createComponent } from "@vue/composition-api";
-import CommunitySocialIcon from "../components/CommunitySocialIcon.vue";
-import facebookSocial from "../assets/facebook.png";
-import twitterSocial from "../assets/twitter.jpg";
-import mediumSocial from "../assets/medium.png";
-import redditSocial from "../assets/reddit.svg";
-import githubSocial from "../assets/github.png";
+import { createComponent } from "vue-function-api";
+import CommunitySocialIcon from "@/components/CommunitySocialIcon.vue";
+import facebookSocial from "@/assets/facebook.png";
+import twitterSocial from "@/assets/twitter.jpg";
+import mediumSocial from "@/assets/medium.png";
+import redditSocial from "@/assets/reddit.svg";
+import githubSocial from "@/assets/github.png";
 
 export default createComponent({
     components: {

@@ -1,16 +1,16 @@
 <template>
     <div class="error-404">
         <div class="error-container">
-            <div class="error-code">{{ $t("error404.404") }}</div>
+            <div class="error-code">404</div>
             <div class="error-description">
-                {{ $t("error404.oops") }}
+                Oops! Looks like you're lost.
             </div>
         </div>
     </div>
 </template>
 
 <script lang="ts">
-import { createComponent } from "@vue/composition-api";
+import { createComponent } from "vue-function-api";
 
 export default createComponent({
     components: {}
@@ -25,14 +25,13 @@ export default createComponent({
     background-repeat: no-repeat;
     background-size: cover;
     display: flex;
-    flex-grow: 1;
     height: 100%;
     justify-content: center;
 }
 
 .error-container {
     align-items: center;
-    color: var(--color-white);
+    color: white;
     display: flex;
     flex-direction: column;
     justify-content: center;

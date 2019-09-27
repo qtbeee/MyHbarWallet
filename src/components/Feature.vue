@@ -13,7 +13,7 @@
 </template>
 
 <script lang="ts">
-import { createComponent, PropType } from "@vue/composition-api";
+import { createComponent, PropType } from "vue-function-api";
 
 export default createComponent({
     props: {
@@ -34,8 +34,8 @@ export default createComponent({
 }
 
 .image {
-    height: 80px;
     margin-inline-end: 30px;
+    width: 80px;
 
     @media (max-width: 500px) {
         margin-block-end: 30px;

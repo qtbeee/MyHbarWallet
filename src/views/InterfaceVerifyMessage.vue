@@ -1,9 +1,9 @@
 <template>
     <div class="verify-message">
-        <InterfaceForm :title="$t('interfaceVerifyMessage.title')">
+        <InterfaceForm title="Verify Message">
             <TextInput
                 v-model.trim="signature"
-                :label="$t('interfaceVerifyMessage.signature')"
+                label="Signature"
                 can-copy
                 can-clear
                 multiline
@@ -11,7 +11,7 @@
 
             <template v-slot:footer>
                 <Button
-                    :label="$t('interfaceVerifyMessage.verifyMessage')"
+                    label="Verify Message"
                     :disabled="!isValid"
                     :busy="busy"
                 />
@@ -21,10 +21,10 @@
 </template>
 
 <script lang="ts">
-import { computed, createComponent, reactive } from "@vue/composition-api";
-import InterfaceForm from "../components/InterfaceForm.vue";
-import TextInput from "../components/TextInput.vue";
-import Button from "../components/Button.vue";
+import { computed, createComponent, value } from "vue-function-api";
+import InterfaceForm from "@/components/InterfaceForm.vue";
+import TextInput from "@/components/TextInput.vue";
+import Button from "@/components/Button.vue";
 
 export default createComponent({
     components: {
@@ -33,15 +33,14 @@ export default createComponent({
         Button
     },
     setup() {
-        const state = reactive({
-            signature: "",
-            busy: false
-        });
+        const signature = value("");
+        const busy = value(false);
 
-        const isValid = computed(() => state.signature.length !== 0);
+        const isValid = computed(() => signature.value.length !== 0);
 
         return {
-            state,
+            signature,
+            busy,
             isValid
         };
     }

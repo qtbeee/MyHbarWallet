@@ -1,9 +1,5 @@
 <template>
-    <div
-        class="select"
-        :class="{ 'is-open': state.dropdownIsOpen }"
-        @click.stop=""
-    >
+    <div class="select" :class="{ 'is-open': dropdownIsOpen }" @click.stop="">
         <div class="select-value-container" @click="toggleDropdown">
             <div class="select-value">{{ selected }}</div>
             <MaterialDesignIcon class="icon" :icon="dropdownIcon" />
@@ -26,20 +22,16 @@ import MaterialDesignIcon from "./MaterialDesignIcon.vue";
 import { mdiChevronDown, mdiChevronUp } from "@mdi/js";
 import {
     createComponent,
-    reactive,
+    value,
     computed,
+    onCreated,
     PropType,
-    onBeforeUnmount,
-    SetupContext
-} from "@vue/composition-api";
+    onBeforeDestroy
+} from "vue-function-api";
 
 interface Props {
     options: string[];
     selected: string;
-}
-
-interface State {
-    dropdownIsOpen: boolean;
 }
 
 export default createComponent({
@@ -50,44 +42,45 @@ export default createComponent({
         prop: "selected",
         event: "change"
     },
+    // TODO: https://github.com/vuejs/vue-function-api/pull/16
     props: {
         selected: (String as unknown) as PropType<string>,
         options: (Array as unknown) as PropType<string[]>
     },
-    setup(props: Props, context: SetupContext) {
-        const state = reactive<State>({
-            dropdownIsOpen: false
-        });
+    setup(props: Props, context) {
+        const dropdownIsOpen = value(false);
 
         const dropdownIcon = computed(() => {
-            if (state.dropdownIsOpen) {
+            if (dropdownIsOpen.value) {
                 return mdiChevronUp;
             }
 
             return mdiChevronDown;
         });
 
-        function handleCloseOnWindowClick(): void {
-            state.dropdownIsOpen = false;
+        function handleCloseOnWindowClick() {
+            dropdownIsOpen.value = false;
         }
 
-        window.addEventListener("click", handleCloseOnWindowClick);
+        onCreated(() => {
+            window.addEventListener("click", handleCloseOnWindowClick);
+        });
 
-        onBeforeUnmount(() => {
+        onBeforeDestroy(() => {
             window.removeEventListener("click", handleCloseOnWindowClick);
         });
 
-        function toggleDropdown(): void {
-            state.dropdownIsOpen = !state.dropdownIsOpen;
+        function toggleDropdown() {
+            dropdownIsOpen.value = !dropdownIsOpen.value;
         }
 
-        function handleOptionClick(option: string): void {
+        function handleOptionClick(option: string) {
             context.emit("change", option);
-            state.dropdownIsOpen = false;
+            dropdownIsOpen.value = false;
         }
 
         return {
-            state,
+            dropdownIsOpen,
             dropdownIcon,
             toggleDropdown,
             handleOptionClick

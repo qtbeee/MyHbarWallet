@@ -1,9 +1,9 @@
 <template>
-    <div class="modal-mnemonic-phrase">
+    <div class="mnemonic-phrase">
         <Modal
-            :title="$t('modalAccessByPhrase.title')"
+            title="Access by Mnemonic Phrase"
             :not-closable="state.isBusy"
-            :is-open="state.isOpen"
+            :is-open="state.modalIsOpen"
             @change="handleModalChangeIsOpen"
         >
             <template v-slot:banner>
@@ -11,24 +11,28 @@
             </template>
 
             <div class="instruction">
-                {{ $t("modalAccessByPhrase.pleaseTypeInYourMnemonicPhrase") }}
+                Please type in your mnemonic phrase
             </div>
-            <form @submit.prevent="$emit('submit')">
-                <MnemonicInput
-                    class="phrase-input"
-                    :words="24"
-                    :value="state.words"
-                    :editable="true"
-                    @input="handleMnemonicInput"
-                />
 
-                <Button
-                    class="continue-btn"
-                    :label="$t('common.continue')"
-                    :busy="state.isBusy"
-                    :disabled="!areFieldsFilled"
-                />
-            </form>
+            <MnemonicInput
+                class="phrase-input"
+                :words="24"
+                :value="state.words"
+                :editable="true"
+                @input="handleMnemonicInput"
+            />
+
+            <div v-if="state.isValid === false" class="error-message">
+                Error: Invalid mnemonic
+            </div>
+
+            <Button
+                class="continue-btn"
+                label="Continue"
+                :busy="state.isBusy"
+                @click="$emit('submit')"
+            />
+
             <div class="support">
                 <CustomerSupportLink />
             </div>
@@ -44,15 +48,10 @@ import MnemonicInput from "../components/MnemonicInput.vue";
 import Button from "../components/Button.vue";
 import CustomerSupportLink from "../components/CustomerSupportLink.vue";
 import Warning from "../components/Warning.vue";
-import {
-    computed,
-    createComponent,
-    watch,
-    SetupContext
-} from "@vue/composition-api";
+import { createComponent } from "vue-function-api";
 
 export interface State {
-    isOpen: boolean;
+    modalIsOpen: boolean;
     words: string[];
     isBusy: boolean;
     isValid: boolean;
@@ -74,39 +73,17 @@ export default createComponent({
     props: {
         state: { type: Object, required: true } as PropOptions<State>
     },
-    setup(props: { state: State }, context: SetupContext) {
-        function handleModalChangeIsOpen(isOpen: boolean): void {
-            context.emit("change", { ...props.state, isOpen });
+    setup(props, context) {
+        function handleModalChangeIsOpen(isOpen: boolean) {
+            context.emit("change", { ...props.state, modalIsOpen: isOpen });
         }
-        function handleMnemonicInput(words: string[]): void {
+        function handleMnemonicInput(words: string[]) {
             context.emit("change", { ...props.state, words });
         }
 
-        const areFieldsFilled = computed(() => {
-            if (props.state.words.length == 24) {
-                for (const word of props.state.words) {
-                    if (!word || word.length === 0) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        });
-
-        // Watch for the modal state to change, and clear input when the modal is reopened
-        watch(
-            () => props.state.isOpen,
-            (newVal: boolean) => {
-                if (newVal) {
-                    context.emit("change", { ...props.state, words: [] });
-                }
-            }
-        );
-
         return {
             handleModalChangeIsOpen,
-            handleMnemonicInput,
-            areFieldsFilled
+            handleMnemonicInput
         };
     }
 });
@@ -148,5 +125,12 @@ export default createComponent({
     display: flex;
     font-size: 14px;
     justify-content: space-around;
+}
+
+.error-message {
+    color: var(--color-basalt-grey);
+    font-family: Montserrat, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
 }
 </style>

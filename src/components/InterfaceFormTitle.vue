@@ -1,21 +1,15 @@
 <template>
     <div class="interface-form-title-container">
         <div class="interface-form-title">{{ title }}</div>
-        <Button :label="$t('common.menu')" @click="emitMenuOpen" />
+        <Button label="Menu" @click="emitMenuOpen" />
     </div>
 </template>
 
 <script lang="ts">
-import { createComponent } from "@vue/composition-api";
-import Button from "../components/Button.vue";
-import store from "../store";
-import { SET_INTERFACE_MENU_IS_OPEN } from "../store/mutations";
-
-// Yes, it is used
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function emitMenuOpen(): void {
-    store.commit(SET_INTERFACE_MENU_IS_OPEN, true);
-}
+import { createComponent } from "vue-function-api";
+import Button from "@/components/Button.vue";
+import store from "@/store";
+import { SET_INTERFACE_MENU_IS_OPEN } from "@/store/mutations";
 
 export default createComponent({
     props: {
@@ -25,6 +19,9 @@ export default createComponent({
         Button
     },
     setup() {
+        function emitMenuOpen() {
+            store.commit(SET_INTERFACE_MENU_IS_OPEN, true);
+        }
         return { emitMenuOpen };
     }
 });
@@ -48,7 +45,7 @@ button {
     min-width: 10px;
     padding: 8px 12px;
 
-    @media (min-width: 1259px) {
+    @media (min-width: 1258px) {
         display: none;
     }
 }

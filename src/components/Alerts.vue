@@ -11,9 +11,9 @@
 </template>
 
 <script lang="ts">
-import store from "../store";
-import Alert from "../components/Alert.vue";
-import { createComponent, computed } from "@vue/composition-api";
+import store from "@/store";
+import Alert from "@/components/Alert.vue";
+import { createComponent, computed } from "vue-function-api";
 
 export default createComponent({
     components: {
@@ -40,22 +40,8 @@ export default createComponent({
     max-height: 425px;
     overflow: hidden;
     position: fixed;
-    width: 375px;
+    width: 325px;
     z-index: 5;
-
-    @media (max-width: 1024px) {
-        inset-block-end: 20px;
-        inset-inline-end: 20px;
-        max-height: 300px;
-        width: 200px;
-    }
-
-    @media (max-width: 425px) {
-        inset-block-end: 10px;
-        inset-inline-end: 0;
-        max-height: 50px;
-        width: calc(100% - 10px);
-    }
 }
 
 .list-enter-active,

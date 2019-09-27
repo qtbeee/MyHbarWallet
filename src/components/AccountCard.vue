@@ -1,136 +1,95 @@
 <template>
     <div class="account">
-        <Identicon :size="60" :value="publicKey" class="account-image" />
+        <Identicon :value="rawPublicKey" :size="60" class="account-image" />
         <div class="content">
             <div class="top">
                 <div class="title">
-                    {{ $t("accountCard.account") }}
+                    Account
                 </div>
                 <div class="subtitle">
                     <span>{{ shard }}.{{ realm }}.</span
                     ><strong>{{ account }}</strong>
                 </div>
+                <div class="subtitle">
+                    {{ rawPublicKey }}
+                </div>
             </div>
             <div class="actions">
+                <!-- TODO: implement QR Button -->
                 <Tooltip
-                    :message="$t('accountCard.accountQrCode')"
+                    v-if="false"
                     class="action"
+                    :pinnable="false"
+                    message="Account QR Code"
                 >
+                    <MaterialDesignIcon class="qr-icon" :icon="mdiQrcode" />
+                </Tooltip>
+                <!-- TODO: Tie Copy/Error alert to copy -->
+                <Tooltip class="action" :pinnable="false" message="Copy Key">
                     <MaterialDesignIcon
-                        :icon="mdiQrcode"
-                        class="qr-icon"
-                        @click="showQrCode"
+                        class="copy-icon"
+                        :icon="mdiContentCopy"
+                        @click="copyKey"
                     />
                 </Tooltip>
-                <Tooltip :message="$t('accountCard.keys')" class="action">
-                    <MaterialDesignIcon
-                        :icon="mdiKey"
-                        class="key-icon"
-                        @click="showKeys"
-                    />
-                </Tooltip>
-                <ExportKeystoreButton
-                    v-if="hasPrivateKey"
-                    :private-key="privateKey"
-                    class="action"
-                />
             </div>
         </div>
-        <ModalViewAccountId
-            v-model="state.viewAccountQrCodeIsOpen"
-            :value="{ shard, realm, account }"
-        />
-        <ModalViewKeys
-            v-if="hasKeys"
-            v-model="state.viewKeysIsOpen"
-            :public-key="publicKey"
-            :private-key="privateKey"
-        />
     </div>
 </template>
 
 <script lang="ts">
-import MaterialDesignIcon from "../components/MaterialDesignIcon.vue";
-import { mdiQrcode, mdiKey } from "@mdi/js";
-import Tooltip from "../components/Tooltip.vue";
-import { computed, createComponent, reactive } from "@vue/composition-api";
-import Identicon from "../components/Identicon.vue";
-import ModalViewAccountId from "../components/ModalViewAccountId.vue";
-import ExportKeystoreButton from "./ExportKeystoreButton.vue";
-import ModalViewKeys from "./ModalViewKeys.vue";
-import store from "../store";
+import MaterialDesignIcon from "@/components/MaterialDesignIcon.vue";
+import { mdiQrcode, mdiContentCopy } from "@mdi/js";
+import Tooltip from "@/components/Tooltip.vue";
+import { writeToClipboard } from "@/clipboard";
+import { computed, createComponent, PropType } from "vue-function-api";
+import Identicon from "@/components/Identicon.vue";
+import { ALERT } from "@/store/actions";
+import store from "@/store";
 
-function getPublicKey(): string | null {
-    return store.state.wallet.session != null
-        ? store.state.wallet.session.privateKey.publicKey.toString(true) // Truncate Prefix
-        : null;
-}
-
-function getPrivateKey(): string | null {
-    return store.state.wallet.session != null
-        ? store.state.wallet.session.privateKey.toString(true) // Truncate Prefix
-        : null;
-}
-
-interface Props {
-    shard: number;
-    realm: number;
-    account: number;
-}
+const ED25519_PREFIX = "302a300506032b6570032100";
 
 export default createComponent({
     components: {
         MaterialDesignIcon,
         Tooltip,
-        Identicon,
-        ModalViewAccountId,
-        ModalViewKeys,
-        ExportKeystoreButton
+        Identicon
     },
     props: {
-        shard: Number,
-        realm: Number,
-        account: Number
+        shard: (Number as unknown) as PropType<number>,
+        realm: (Number as unknown) as PropType<number>,
+        account: (Number as unknown) as PropType<number>,
+        publicKey: (String as unknown) as PropType<string>
     },
-    setup() {
-        const hasPrivateKey = computed(() => getPrivateKey() !== null);
-        const hasPublicKey = computed(() => getPublicKey() !== null);
-        const hasKeys = computed(
-            () => hasPrivateKey.value && hasPublicKey.value
-        );
-        const privateKey = computed(() => getPrivateKey());
-        const publicKey = computed(() => getPublicKey());
+    setup(props) {
+        const rawPublicKey = computed(() => {
+            let publickey = props.publicKey;
+            if (publickey.startsWith(ED25519_PREFIX, 0)) {
+                publickey = publickey.slice(ED25519_PREFIX.length);
+            }
 
-        const state = reactive({
-            viewAccountQrCodeIsOpen: false,
-            viewKeysIsOpen: false
+            return publickey;
         });
 
-        function showKeys(): void {
-            state.viewKeysIsOpen = true;
-        }
+        const copyKey = async () => {
+            await writeToClipboard(props.publicKey);
 
-        function showQrCode(): void {
-            state.viewAccountQrCodeIsOpen = true;
-        }
-
+            store.dispatch(ALERT, {
+                level: "info",
+                message: "Copied"
+            });
+        };
         return {
             mdiQrcode,
-            mdiKey,
-            state,
-            hasPrivateKey,
-            hasPublicKey,
-            hasKeys,
-            privateKey,
-            publicKey,
-            showKeys,
-            showQrCode
+            mdiContentCopy,
+            rawPublicKey,
+            copyKey
         };
     }
 });
 </script>
 
-<style lang="postcss" scoped>
+<style scoped lang="postcss">
 .account {
     background-color: var(--color-hera-blue);
     border-radius: 4px;

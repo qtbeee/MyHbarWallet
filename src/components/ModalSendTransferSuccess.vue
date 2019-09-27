@@ -1,10 +1,6 @@
 <template>
     <div class="modal-send-transfer-success">
-        <Modal
-            :is-open="isOpen"
-            hide-decoration
-            @change="this.$listeners.change"
-        >
+        <Modal :is-open="open" hide-decoration @change="handleModalChange">
             <div class="container">
                 <MaterialDesignIcon
                     class="large-checkbox"
@@ -12,18 +8,17 @@
                     :size="200"
                 />
                 <div class="title">
-                    {{ $t("common.success") }}
+                    Success
                 </div>
                 <div class="description">
-                    <i18n path="modalSendTransferSuccess.transferred">
-                        <strong>{{ amount }}</strong>
-                        <strong>{{ toAccount }}</strong>
-                    </i18n>
+                    Transferred <strong>{{ amount }}</strong> hbar to account
+                    <strong>{{ toAccount }}</strong
+                    >.
                 </div>
                 <Button
                     class="btn"
                     outline
-                    :label="$t('common.dismiss')"
+                    label="Dismiss"
                     @click="handleClose"
                 />
             </div>
@@ -32,11 +27,11 @@
 </template>
 
 <script lang="ts">
-import { createComponent } from "@vue/composition-api";
+import { createComponent } from "vue-function-api";
 import Modal from "../components/Modal.vue";
 import Button from "../components/Button.vue";
 import { mdiCheck } from "@mdi/js";
-import MaterialDesignIcon from "../components/MaterialDesignIcon.vue";
+import MaterialDesignIcon from "@/components/MaterialDesignIcon.vue";
 
 export default createComponent({
     components: {
@@ -44,17 +39,26 @@ export default createComponent({
         Button,
         MaterialDesignIcon
     },
+    model: {
+        prop: "open",
+        event: "change"
+    },
     props: {
-        isOpen: Boolean,
+        open: Boolean,
         toAccount: String,
         amount: String
     },
     setup(props, context): object {
-        function handleClose(): void {
+        function handleModalChange(isOpen: boolean) {
+            context.emit("change", isOpen);
+        }
+
+        function handleClose() {
             context.emit("change", false);
         }
 
         return {
+            handleModalChange,
             handleClose,
             mdiCheck
         };

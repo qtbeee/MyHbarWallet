@@ -4,9 +4,10 @@
             <div class="page-container">
                 <div class="head">
                     <div class="title">
-                        <div class="title-text">{{ $t("common.faqs") }}</div>
+                        <div class="title-text">FAQs</div>
                         <div class="subtitle-text">
-                            {{ $t("faqs.answersToMostFAQs") }}
+                            Bacon ipsum dolor amet jerky venison short ribs
+                            tri-tip porchetta
                         </div>
                     </div>
                     <CustomerSupportLink class="customer-support-link" />
@@ -14,42 +15,47 @@
                 <div class="cards">
                     <Accordion>
                         <template v-slot:title>
-                            {{ $t("faqs.howDoICreateANewAccountQuestion") }}
+                            How do I create a new account?
                         </template>
                         <template v-slot:content>
-                            {{ $t("faqs.howDoICreateANewAccountAnswer") }}
+                            MyHederaWallet (MHW) offers three ways to create a
+                            new H wallet. These are via Keystore file,
+                            Passphrase, or Private Key.
                         </template>
                     </Accordion>
                     <Accordion>
                         <template v-slot:title>
-                            {{ $t("faqs.canMHWWorkWithOtherWalletsQuestion") }}
+                            Can MHW work with other wallets?
                         </template>
                         <template v-slot:content>
-                            {{ $t("faqs.canMHWWorkWithOtherWalletsAnswer") }}
+                            MHW supports many different wallet types including
+                            hardware wallets, such as the Ledger Nano S or
+                            Trezor. We are also open for anyone to use their H
+                            wallets with the appropriate information.
                         </template>
                     </Accordion>
                     <Accordion>
                         <template v-slot:title>
-                            {{ $t("faqs.howMuchDoesItCostQuestion") }}
+                            How can I send a transaction?
                         </template>
                         <template v-slot:content>
-                            {{ $t("faqs.howMuchDoesItCostAnswer") }}
+                            MHW lets anyone with a balance of Hbar send a
+                            transaction without additional charges. Using the
+                            Hedera Hashgraph requires a transaction fee paid in
+                            Hbar, so we recommend having at least 1 Hbar to
+                            cover around 2 - 3 transactions.
                         </template>
                     </Accordion>
                     <Accordion>
                         <template v-slot:title>
-                            {{
-                                $t(
-                                    "faqs.iForgotMyPassphrase/PrivateKeyWhatCanIDoQuestion"
-                                )
-                            }}
+                            I forgot my passphrase / private key! What can I do?
                         </template>
                         <template v-slot:content>
-                            {{
-                                $t(
-                                    "faqs.iForgotMyPassphrase/PrivateKeyWhatCanIDoAnswer"
-                                )
-                            }}
+                            MHW does not offer support for recovery or reset of
+                            passwords / private keys. We always suggest writing
+                            down private keys and passwords on physical media
+                            for safekeeping. Maybe you saved it on your
+                            computer!
                         </template>
                     </Accordion>
                 </div>
@@ -59,9 +65,9 @@
 </template>
 
 <script lang="ts">
-import { createComponent } from "@vue/composition-api";
-import Accordion from "../components/Accordion.vue";
-import CustomerSupportLink from "../components/CustomerSupportLink.vue";
+import { createComponent } from "vue-function-api";
+import Accordion from "@/components/Accordion.vue";
+import CustomerSupportLink from "@/components/CustomerSupportLink.vue";
 
 export default createComponent({
     components: {

@@ -14,13 +14,11 @@
     --color-boathouse: #536d8b;
     --color-boston-blue: #2f96b4;
     --color-boysenberry-shadow: #f2f4fa;
-    --color-boysenberry-shadow-transparent: #f2f4faaa;
     --color-bubble-bobble-p2: #0084ff;
     --color-byzantine-night-blue: #5a78f0;
     --color-california-orange: #f89406;
     --color-celestial-green: #3ed7bc;
     --color-china-blue: #506175;
-    --color-christmas-pink: #e83e8c;
     --color-coral-red: #ff4040;
     --color-dilly-blue: #334758;
     --color-distant-horizon: #f3fafa;
@@ -57,17 +55,5 @@ body {
     /* For the Modal component */
     &.modal-is-open {
         overflow: hidden;
-
-        @supports (-webkit-overflow-scrolling: touch) {
-            position: fixed;
-        }
-    }
-
-    &.ham-menu-is-open {
-        overflow: hidden;
-
-        @supports (-webkit-overflow-scrolling: touch) {
-            position: fixed;
-        }
     }
 }

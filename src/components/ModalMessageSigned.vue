@@ -1,31 +1,19 @@
 <template>
-    <Modal
-        :title="$t('modalMessageSigned.title')"
-        :is-open="isOpen"
-        @change="this.$listeners.change"
-    >
+    <Modal title="Signature" :is-open="isOpen" @change="this.$listeners.change">
         <!-- fixme: either bind this to save edits or make it non-editable -->
-        <TextInput
-            :label="$t('modalMessageSigned.signedMessage')"
-            can-copy
-            multiline
-            :value="value"
-        />
+        <TextInput label="Signed Message" can-copy multiline :value="value" />
 
         <div class="button-container">
-            <Button
-                :label="$t('common.copy')"
-                @click="handleClickCopy"
-            ></Button>
+            <Button label="Copy" @click="handleClickCopy"></Button>
         </div>
     </Modal>
 </template>
 <script lang="ts">
-import { createComponent, PropType } from "@vue/composition-api";
+import { createComponent, PropType } from "vue-function-api";
 import Modal from "../components/Modal.vue";
 import Button from "../components/Button.vue";
 import TextInput from "../components/TextInput.vue";
-import { writeToClipboard } from "../clipboard";
+import { writeToClipboard } from "@/clipboard";
 
 export default createComponent({
     components: {
@@ -37,14 +25,8 @@ export default createComponent({
         isOpen: (Boolean as unknown) as PropType<boolean>,
         value: (String as unknown) as PropType<string>
     },
-    setup(
-        props: {
-            isOpen: boolean;
-            value: string;
-        },
-        context
-    ) {
-        async function handleClickCopy(): Promise<void> {
+    setup(props, context) {
+        async function handleClickCopy() {
             await writeToClipboard(props.value);
             context.emit("change", false);
         }

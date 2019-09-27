@@ -1,10 +1,10 @@
 <template>
-    <div class="footer-top">
+    <div class="footer-top" :class="{ 'footer-w-affiliate': hasAffiliates }">
         <div class="section">
-            <div class="title">{{ $t("footerTop.discover") }}</div>
+            <div class="title">Discover</div>
             <div class="item">
                 <router-link :to="{ name: 'convert-units' }" class="link">
-                    {{ $t("footerTop.units") }}
+                    Units
                 </router-link>
             </div>
             <div class="item">
@@ -12,91 +12,162 @@
                     :to="{ name: 'hardware-wallet-affiliates' }"
                     class="link"
                 >
-                    {{ $t("footerTop.buyAHardwareWallet") }}
+                    Buy a Hardware Wallet
                 </router-link>
             </div>
         </div>
-        <!-- enable and add affiliates in src/affiliates.ts -->
-        <div class="section">
-            <div class="title">{{ $t("footerTop.affiliates") }}</div>
-            <template v-for="affiliate of affiliates">
-                <div
-                    v-if="affiliate.supported"
-                    :key="affiliate.name"
-                    class="item"
+        <div v-if="hasAffiliates" class="section">
+            <div class="title">Affiliates</div>
+            <div class="item">
+                <a
+                    rel="noopener"
+                    target="_blank"
+                    class="link"
+                    href="https://www.ledger.com/"
                 >
-                    <a
-                        rel="noopener"
-                        target="_blank"
-                        class="link"
-                        :href="affiliate.address"
-                    >
-                        {{ affiliate.name }}
-                    </a>
-                </div>
-            </template>
+                    Ledger Wallet
+                </a>
+            </div>
+            <div class="item">
+                <a
+                    rel="noopener"
+                    target="_blank"
+                    class="link"
+                    href="https://ether.cards/"
+                >
+                    Ether Card
+                </a>
+            </div>
+            <div class="item">
+                <a
+                    rel="noopener"
+                    target="_blank"
+                    class="link"
+                    href="https://bity.com/"
+                >
+                    Bity
+                </a>
+            </div>
+            <div class="item">
+                <a
+                    rel="noopener"
+                    target="_blank"
+                    class="link"
+                    href="https://billfodl.com/"
+                >
+                    Billfodl
+                </a>
+            </div>
+            <div class="item">
+                <a
+                    rel="noopener"
+                    target="_blank"
+                    class="link"
+                    href="http://shop.sirinlabs.com/"
+                >
+                    Finney
+                </a>
+            </div>
+            <div class="item">
+                <a
+                    rel="noopener"
+                    target="_blank"
+                    class="link"
+                    href="https://shiftcrypto.ch/"
+                >
+                    Bitbox
+                </a>
+            </div>
+            <div class="item">
+                <a
+                    rel="noopener"
+                    target="_blank"
+                    class="link"
+                    href="https://trezor.io/"
+                >
+                    Trezor
+                </a>
+            </div>
+            <div class="item">
+                <a
+                    rel="noopener"
+                    target="_blank"
+                    class="link"
+                    href="https://www.secalot.com/"
+                >
+                    Secalot
+                </a>
+            </div>
+            <div class="item">
+                <a
+                    rel="noopener"
+                    target="_blank"
+                    class="link"
+                    href="https://keepkey.myshopify.com/"
+                >
+                    Keepkey
+                </a>
+            </div>
         </div>
         <div class="section">
-            <div class="title">MyHbarWallet</div>
+            <div class="title">MHW</div>
             <div class="item">
                 <router-link
                     :to="{ name: 'home', hash: '#about' }"
                     class="link"
                 >
-                    {{ $t("common.about") }}
+                    About
                 </router-link>
             </div>
             <div class="item">
                 <router-link :to="{ name: 'home', hash: '#faqs' }" class="link">
-                    {{ $t("common.faqs") }}
+                    FAQs
                 </router-link>
             </div>
             <div class="item customer-service" @click="handleButtonClick">
-                {{ $t("footerTop.customerSupport") }}
+                Customer Support
             </div>
         </div>
         <div class="section">
             <div class="title">
-                <i18n path="footerTop.donate">
-                    <img class="love" src="../assets/heart.svg" />
-                </i18n>
+                Love
+                <img class="love" src="../assets/heart.svg" />
+                MHW? Donate!
             </div>
             <div class="item">
-                {{ $t("footerTop.MHWIsOpenSourced") }}
+                MyHederaWallet is open-source and free to the community. Your
+                donations go a long way towards making that possible.
             </div>
             <div class="donation">
-                <img class="hbar-icon" :src="hbar" />
+                <img class="hbar-icon" src="../assets/icon-hbar-outline2.svg" />
+                <!-- TODO: Figure out who we are donating to -->
                 0.0.1001
             </div>
         </div>
-        <ModalCustomerService v-model="state.modalCustomerServiceIsOpen" />
+        <ModalCustomerService v-model="modalCustomerServiceIsOpen" />
     </div>
 </template>
 
 <script lang="ts">
-import { createComponent, reactive } from "@vue/composition-api";
-import ModalCustomerService from "../components/ModalCustomerService.vue";
-import hbar from "../assets/icon-hbar-outline.svg";
-import affiliates from "../affiliates";
+import { createComponent, value } from "vue-function-api";
+import ModalCustomerService from "@/components/ModalCustomerService.vue";
 
 export default createComponent({
     components: {
         ModalCustomerService
     },
     setup() {
-        const state = reactive({
-            modalCustomerServiceIsOpen: false
-        });
+        const modalCustomerServiceIsOpen = value(false);
+        const hasAffiliates = false;
 
-        function handleButtonClick(): void {
-            state.modalCustomerServiceIsOpen = !state.modalCustomerServiceIsOpen;
+        function handleButtonClick() {
+            modalCustomerServiceIsOpen.value = !modalCustomerServiceIsOpen.value;
         }
 
         return {
-            hbar,
-            state,
+            modalCustomerServiceIsOpen,
             handleButtonClick,
-            affiliates
+            hasAffiliates
         };
     }
 });
@@ -106,7 +177,7 @@ export default createComponent({
 .footer-top {
     border-bottom: 1px solid var(--color-china-blue);
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1.5fr;
+    grid-template-columns: 1fr 1fr 1.5fr;
     justify-content: space-between;
     margin: auto;
     margin-block-end: 40px;
@@ -120,6 +191,10 @@ export default createComponent({
         grid-template-columns: auto;
         padding-block-start: 0;
     }
+}
+
+.footer-w-affiliate {
+    grid-template-columns: 1fr 1fr 1fr 1.5fr;
 }
 
 .section {

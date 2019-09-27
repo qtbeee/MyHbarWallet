@@ -1,59 +1,48 @@
 <template>
     <Modal
         :is-open="isOpen"
-        :title="$t('modalCustomerService.title')"
+        title="Issue Information"
         @change="this.$listeners.change"
     >
         <template>
-            <form
-                class="modal-issue-information"
-                @submit.prevent="handleSubmit"
-            >
+            <div class="modal-issue-information">
                 <TextInput
-                    v-if="!hasBrowser"
-                    v-model="state.browser"
                     class="issue-item"
-                    :placeholder="$t('modalCustomerService.browser')"
+                    placeholder="Browser"
+                    :value="browser"
+                    @input="handleBrowserInput"
                 />
                 <TextInput
-                    v-if="!hasPlatform"
-                    v-model="state.platform"
                     class="issue-item"
-                    :placeholder="$t('modalCustomerService.operatingSystem')"
+                    placeholder="Operating System"
+                    :value="platform"
+                    @input="handlePlatformInput"
                 />
                 <TextInput
-                    v-if="!hasDevice"
-                    v-model="state.device"
                     class="issue-item"
-                    :placeholder="
-                        $t('modalCustomerService.deviceOrWalletIfAny')
-                    "
+                    placeholder="Device/Wallet type (if any)"
+                    :value="device"
+                    @input="handleDeviceInput"
                 />
                 <TextInput
-                    v-if="!hasAccountId"
-                    v-model="state.accountId"
                     class="issue-item"
-                    :placeholder="$t('modalCustomerService.accountIdIfAny')"
+                    placeholder="Account ID (if any)"
+                    :value="accountId"
+                    @input="handleAccountIdInput"
                 />
+                <TextInput class="issue-item" placeholder="URL" :value="url" />
                 <TextInput
-                    v-if="!hasUrl"
-                    v-model="state.url"
-                    class="issue-item"
-                    :placeholder="$t('modalCustomerService.url')"
-                />
-                <TextInput
-                    v-model="state.description"
                     multiline
                     class="issue-item"
-                    :placeholder="$t('modalCustomerService.describeTheIssue')"
+                    placeholder="Describe the issue"
                     resizable
+                    :value="description"
+                    @input="handleDescriptionInput"
                 />
-                <Button
-                    :label="$t('common.send')"
-                    class="send-button"
-                    :compact="true"
-                />
-            </form>
+                <a :href="sendLink">
+                    <Button label="Send" class="send-button" :compact="true" />
+                </a>
+            </div>
         </template>
     </Modal>
 </template>
@@ -63,21 +52,30 @@ import Modal from "../components/Modal.vue";
 import Button from "../components/Button.vue";
 import TextInput from "../components/TextInput.vue";
 import { UAParser } from "ua-parser-js";
-import {
-    createComponent,
-    PropType,
-    computed,
-    watch,
-    reactive
-} from "@vue/composition-api";
-import store from "../store";
-import { Id } from "../store/modules/wallet";
-import { build, createLink } from "../support";
+import { createComponent, PropType, value, computed } from "vue-function-api";
 
-// Both of these are defined in vue.config.js.
-// VERSION reads from package.json and COMMIT_HASH is git rev-parse --short HEAD output
-declare const VERSION: string;
-declare const COMMIT_HASH: string;
+function createLink(
+    url: string,
+    platform: string,
+    browser: string,
+    device: string,
+    accountId: string,
+    description: string
+): string {
+    const subjectTemplate = `Issue on ${url}`;
+    const bodyTemplate = `Browser: ${browser}
+OS: ${platform}
+Device: ${device}
+AccountID: ${accountId}
+URL: ${url}
+
+
+${description}
+`;
+    return `mailto:contact@myhbarwallet.com?subject=${encodeURIComponent(
+        subjectTemplate
+    )}&body=${encodeURIComponent(bodyTemplate)}`;
+}
 
 export default createComponent({
     components: {
@@ -92,99 +90,58 @@ export default createComponent({
     props: {
         isOpen: (Boolean as unknown) as PropType<boolean>
     },
-    setup(props, context) {
+    setup() {
         const ua = new UAParser(navigator.userAgent);
+        const platform = value(ua.getOS.name);
+        const browser = value(ua.getBrowser().name || "");
+        const url = value(location.pathname);
+        const description = value("");
+        const device = value("");
+        const accountId = value("");
+        function handleBrowserInput(input: string) {
+            browser.value = input;
+        }
 
-        const account = computed(() => {
-            return store.state.wallet.session != null
-                ? store.state.wallet.session.account
-                : null;
-        });
+        function handlePlatformInput(input: string) {
+            platform.value = input;
+        }
 
-        const accountId = computed(() => {
-            if (account.value !== null) {
-                const accountId: Id = account.value;
-                return (
-                    accountId.shard +
-                    "." +
-                    accountId.realm +
-                    "." +
-                    accountId.account
-                );
-            }
+        function handleDeviceInput(input: string) {
+            device.value = input;
+        }
 
-            return null;
-        });
+        function handleAccountIdInput(input: string) {
+            accountId.value = input;
+        }
 
-        const platform = computed(() => {
-            const name = ua.getOS().name;
-            const version = ua.getOS().version;
-            return build(name, version);
-        });
-
-        const browser = computed(() => {
-            const name = ua.getBrowser().name;
-            const version = ua.getBrowser().version;
-            return build(name, version);
-        });
-
-        const url = computed(() => {
-            return context.root.$route != undefined
-                ? context.root.$route.fullPath
-                : null;
-        });
-
-        const device = computed(() => {
-            const type = ua.getDevice().type;
-            const model = ua.getDevice().model;
-            return build(type, model);
-        });
-
-        const state = reactive({
-            platform: platform.value || "",
-            browser: browser.value || "",
-            url: url.value,
-            description: "",
-            device: device.value || "",
-            version: "v" + VERSION + "+" + COMMIT_HASH,
-            accountId: accountId.value || ""
-        });
+        function handleDescriptionInput(input: string) {
+            description.value = input;
+        }
 
         const sendLink = computed(() =>
             createLink(
-                state.url,
-                state.platform,
-                state.browser,
-                state.device,
-                state.version,
-                state.accountId,
-                state.description
+                url.value,
+                platform.value,
+                browser.value,
+                device.value,
+                accountId.value,
+                description.value
             )
         );
 
-        function handleSubmit(): void {
-            window.open(sendLink.value);
-        }
-
-        // When the route is updated, reset the path value
-        watch(
-            () => context.root.$route,
-            () => {
-                if (context.root.$route == undefined) return null;
-
-                state.url = context.root.$route.fullPath;
-            }
-        );
-
         return {
-            hasAccountId: accountId.value !== null,
-            hasPlatform: platform.value !== null,
-            hasBrowser: browser.value !== null,
-            hasUrl: url.value !== null,
-            hasDevice: device.value !== null,
-            state,
+            platform,
+            browser,
+            url,
+            device,
+            accountId,
+            description,
             sendLink,
-            handleSubmit
+            handleBrowserInput,
+            handlePlatformInput,
+            handleDeviceInput,
+            handleAccountIdInput,
+            handleDescriptionInput
         };
     }
 });

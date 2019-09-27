@@ -1,42 +1,40 @@
 <template>
-    <div class="modal-enter-account-id">
+    <div class="enter-account-id">
         <Modal
             :is-open="isOpen"
-            :title="$t('modalEnterAccountId.title')"
+            :not-closable="isBusy"
+            title="Enter Account ID"
             @change="handleModalChangeIsOpen"
         >
-            <template v-slot:banner>
-                <Notice class="notice" :symbol="mdiHelpCircleOutline">
-                    {{ $t("modalEnterAccountId.hederaAccountIdsAre") }}
-                </Notice>
-            </template>
-            <form @submit.stop.prevent="handleSubmit">
-                <IDInput
-                    ref="input"
-                    :is-open="isOpen"
-                    :error-message="state.errorMessage"
-                    @valid="handleValid"
-                    @input="handleAccount"
-                ></IDInput>
-                <div class="buttons">
-                    <Button
-                        compact
-                        outline
-                        :label="$t('modalEnterAccountId.noAccountId')"
-                        class="button"
-                        type="button"
-                        @click="handleDontHaveAccount"
-                    />
-                    <Button
-                        compact
-                        :label="$t('common.continue')"
-                        class="button"
-                        type="submit"
-                        :disabled="!state.valid"
-                        :busy="state.isBusy"
-                    />
-                </div>
-            </form>
+            <div class="label">
+                Bacon ipsum dolor amet jerky
+            </div>
+
+            <TextInput
+                ref="input"
+                :value="input"
+                show-validation
+                :valid="valid"
+                :error="errorMessage"
+                placeholder="shard.realm.account"
+                @input="handleInput"
+            />
+
+            <div class="btn-container">
+                <Button
+                    class="btn"
+                    label="Continue"
+                    :disabled="!valid"
+                    :busy="isBusy"
+                    @click="handleSubmit"
+                />
+            </div>
+
+            <div class="link-container">
+                <span class="link" @click="handleDontHaveAccount">
+                    Don't have an Account ID?
+                </span>
+            </div>
         </Modal>
     </div>
 </template>
@@ -44,212 +42,186 @@
 <script lang="ts">
 import {
     createComponent,
+    value,
+    computed,
+    watch,
     PropType,
-    reactive,
-    SetupContext
-} from "@vue/composition-api";
+    Wrapper
+} from "vue-function-api";
 import Modal from "../components/Modal.vue";
-import TextInput from "../components/TextInput.vue";
+import TextInput, {
+    Component as TextInputComponent
+} from "../components/TextInput.vue";
 import Button from "../components/Button.vue";
-import IDInput from "../components/IDInput.vue";
-import { Id } from "../store/modules/wallet";
-import settings from "../settings";
-import Notice from "../components/Notice.vue";
-import { mdiHelpCircleOutline } from "@mdi/js";
-import { ALERT } from "../store/actions";
-import store from "../store";
+import { SetupContext } from "vue-function-api/dist/types/vue";
+import { Id } from "@/store/modules/wallet";
+import { Client, CryptoTransferTransaction } from "hedera-sdk-js";
+import store from "@/store";
+import { LOG_IN } from "@/store/mutations";
+import { SigningOpts } from "hedera-sdk-js/src/Client";
 
 export interface Props {
+    signingOptions: SigningOpts | null;
     isOpen: boolean;
-    privateKey: import("@hashgraph/sdk").Ed25519PrivateKey | null;
+    // Used to validate accuont ID
+    privateKey: string | null;
 }
 
-interface State {
-    failed: string | null;
-    errorMessage: string | null;
-    isBusy: boolean;
-    account: Id | null;
-    valid: boolean;
-}
+type Context = SetupContext & {
+    refs: {
+        input: TextInputComponent;
+    };
+};
 
 export default createComponent({
     components: {
         Modal,
         TextInput,
-        Button,
-        Notice,
-        IDInput
+        Button
     },
     model: {
         prop: "isOpen",
         event: "change"
     },
     props: {
-        privateKey: (Object as unknown) as PropType<
-            import("@hashgraph/sdk").Ed25519PrivateKey | null
-        >,
-        isOpen: Boolean
+        signingOptions: (Object as unknown) as PropType<SigningOpts | null>,
+        privateKey: (String as unknown) as PropType<string | null>,
+        isOpen: (Boolean as unknown) as PropType<boolean>
     },
-    setup(props: Props, context: SetupContext) {
-        const state = reactive<State>({
-            failed: null,
-            errorMessage: null,
-            isBusy: false,
-            account: null,
-            valid: false
-        });
+    setup(props: Props, context) {
+        const regex = /\d+\.\d+\.\d+/;
+        const input = value("");
+        const failed: Wrapper<string | null> = value(null);
+        const valid = computed(() => regex.test(input.value));
 
-        function handleAccount(value: string, account: Id | null): void {
-            state.errorMessage = null;
-            state.account = account;
+        const errorMessage = value<string | null>(null);
+        const isBusy = value(false);
+        const account = value<Id | null>(null);
+
+        function handleInput(accountText: string) {
+            input.value = accountText;
+
+            if (valid.value) {
+                const parts = input.value.split(".");
+                account.value = {
+                    shard: parseInt(parts[0]),
+                    realm: parseInt(parts[1]),
+                    account: parseInt(parts[2])
+                };
+            } else {
+                account.value = null;
+            }
         }
 
-        function handleValid(valid: boolean): void {
-            state.valid = valid;
-        }
-
-        function handleModalChangeIsOpen(isOpen: boolean): void {
+        function handleModalChangeIsOpen(isOpen: boolean) {
             context.emit("change", isOpen);
         }
 
-        function handleDontHaveAccount(): void {
+        function handleDontHaveAccount() {
             context.emit("noAccount");
         }
 
-        async function handleSubmit(): Promise<void> {
-            state.errorMessage = null;
-            state.isBusy = true;
+        async function handleSubmit() {
+            errorMessage.value = null;
+            isBusy.value = true;
 
-            if (state.account == null || props.privateKey == null) {
+            if (account.value == null || props.signingOptions == null) {
                 throw new Error("unexpected submission of EnterAccountID");
             }
-
-            const { Client, HederaError, ResponseCodeEnum } = await (import(
-                "@hashgraph/sdk"
-            ) as Promise<typeof import("@hashgraph/sdk")>);
 
             let client;
 
             try {
                 client = new Client({
-                    nodes: {
-                        [settings.network.proxy]: {
-                            shard: 0,
-                            realm: 0,
-                            account: 3
-                        }
-                    },
-                    operator: {
-                        account: state.account,
-                        privateKey: props.privateKey.toString()
-                    }
+                    account: account.value,
+                    ...props.signingOptions
                 });
 
                 // In Hedera, the signature map is checked BEFORE
                 // the valid duration. If we fail on the signature map
                 // then we know the account ID is mismatched to the private key.
 
-                const { CryptoTransferTransaction } = await import(
-                    "@hashgraph/sdk"
-                );
                 await new CryptoTransferTransaction(client)
-                    .addSender(state.account, 0)
+                    .addSender(account.value, 0)
+                    // 0.0.3 is _A_ node and a system account
                     .addRecipient({ realm: 0, shard: 0, account: 3 }, 0)
-                    .setTransactionFee(1)
+                    .setTransactionFee(100_000)
+                    .setTransactionValidDuration(0)
                     .build()
                     .executeForReceipt();
             } catch (error) {
-                if (error instanceof HederaError) {
-                    if (
-                        error.code ===
-                            ResponseCodeEnum.PAYER_ACCOUNT_NOT_FOUND ||
-                        error.code === ResponseCodeEnum.INVALID_ACCOUNT_ID
-                    ) {
-                        state.errorMessage = context.root
-                            .$t("common.error.payerAccountNotFound")
-                            .toString();
-
-                        return;
-                    } else if (
-                        error.code === ResponseCodeEnum.INVALID_SIGNATURE
-                    ) {
-                        state.errorMessage = context.root
-                            .$t("common.error.invalidSignature")
-                            .toString();
-
-                        return;
-                    } else if (
-                        error.code ===
-                        ResponseCodeEnum.INVALID_TRANSACTION_START
-                    ) {
-                        state.errorMessage =
-                            "Invalid date time. Check your current system time.";
-                        return;
-                    } else if (
-                        error.code === ResponseCodeEnum.INSUFFICIENT_TX_FEE
-                    ) {
-                        // This is actually good here
-                        context.emit("submit", client, state.account);
-                        return;
+                if (error instanceof Error) {
+                    if (error.message === "PAYER_ACCOUNT_NOT_FOUND") {
+                        errorMessage.value =
+                            "This account does not exist in the network.";
+                    } else if (error.message === "INVALID_SIGNATURE") {
+                        errorMessage.value =
+                            "This account is not associated with your private key.";
                     } else {
-                        store.dispatch(ALERT, {
-                            message: `Received unhandled error from Hedera:  ${error.codeName}`,
-                            level: "error"
-                        });
-                        throw error;
+                        // This is actually good here
+                        context.emit("submit", client, account.value);
+                        return;
                     }
-                } else if (
-                    error instanceof Error &&
-                    error.message === "Response closed without headers"
-                ) {
-                    state.errorMessage = context.root
-                        .$t("common.error.noConnection")
-                        .toString();
-
-                    return;
                 }
-
-                throw error;
             } finally {
-                state.isBusy = false;
+                isBusy.value = false;
             }
         }
 
+        watch(
+            () => props.isOpen,
+            (newVal: boolean) => {
+                if (newVal) {
+                    (context as Context).refs.input.focus();
+                }
+            }
+        );
+
         return {
-            state,
-            handleAccount,
+            input,
+            valid,
+            errorMessage,
+            isBusy,
+            failed,
+            handleInput,
             handleModalChangeIsOpen,
             handleDontHaveAccount,
-            handleSubmit,
-            handleValid,
-            mdiHelpCircleOutline
+            handleSubmit
         };
     }
 });
 </script>
 
 <style scoped lang="postcss">
-.button {
-    width: 213px;
-
-    @media (max-width: 425px) {
-        width: 100%;
-
-        &:first-child {
-            margin-block-end: 15px;
-        }
-    }
+.label {
+    color: var(--color-china-blue);
+    font-size: 14px;
+    margin-block-end: 10px;
 }
 
-.buttons {
+.btn-container {
+    align-items: center;
     display: flex;
-    justify-content: space-between;
-    margin-block-start: 40px;
+    justify-content: center;
+    padding: 20px;
     width: 100%;
+}
 
-    @media (max-width: 425px) {
-        align-items: center;
-        flex-direction: column;
+.link-container {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}
+
+.link {
+    color: var(--color-china-blue);
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+        text-decoration: underline;
     }
 }
 </style>

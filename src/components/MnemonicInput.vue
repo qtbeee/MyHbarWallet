@@ -4,20 +4,16 @@
             v-for="index in words"
             :key="index"
             class="list-item"
-            :class="{ 'is-focused': state.focused === index }"
+            :class="{ 'is-focused': focused === index }"
         >
             <span class="number">{{ index }}.</span>
 
             <input
-                type="text"
                 class="word"
                 :value="value.length < index ? '' : value[index - 1]"
                 :readonly="!editable"
                 :data-index="index"
                 :tabindex="editable ? null : -1"
-                autocomplete="off"
-                autocapitalize="off"
-                spellcheck="false"
                 @input="handleInput"
                 @focus="handleFocus"
             />
@@ -26,63 +22,38 @@
 </template>
 
 <script lang="ts">
-import {
-    createComponent,
-    PropType,
-    reactive,
-    SetupContext
-} from "@vue/composition-api";
-
-interface State {
-    focused: number | null;
-}
-
-interface Props {
-    editable: boolean;
-    words: number;
-    value: string[];
-}
+import { createComponent, value } from "vue-function-api";
 
 export default createComponent({
     props: {
-        editable: Boolean,
-        words: Number,
-        value: (Array as unknown) as PropType<string[]>
+        editable: (Boolean as unknown) as boolean,
+        words: (Number as unknown) as number,
+        value: (Array as unknown) as string[]
     },
-    setup(props: Props, context: SetupContext) {
-        const state = reactive<State>({
-            focused: null as number | null
-        });
-
-        function handleInput(event: Event): void {
-            if (props.value == null) {
-                return;
-            }
-
+    setup(props, context) {
+        const focused = value<number | null>(null);
+        function handleInput(event: Event) {
             const target = event.target as HTMLInputElement;
-            const newValues = props.value.slice();
-            const index = Number.parseInt(target.dataset.index!, 10) - 1;
+            const index = Number.parseInt(target.dataset.index || "0", 10);
 
-            const splitString = target.value.trim().split(" ");
-            splitString.forEach((item, i) => {
-                newValues[index + i] = item;
-            });
+            const newValues = props.value.slice();
+            newValues[index - 1] = target.value;
 
             context.emit("input", newValues);
         }
 
-        function handleFocus(event: Event): void {
+        function handleFocus(event: Event) {
             if (!props.editable) {
                 // Non-editable controls should not set focus
                 return;
             }
 
             const target = event.target as HTMLInputElement;
-            state.focused = Number.parseInt(target.dataset.index || "0", 10);
+            focused.value = Number.parseInt(target.dataset.index || "0", 10);
         }
 
         return {
-            state,
+            focused,
             handleInput,
             handleFocus
         };

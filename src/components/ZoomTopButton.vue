@@ -10,25 +10,26 @@
 
 <script lang="ts">
 import { mdiChevronUp } from "@mdi/js";
-import MaterialDesignIcon from "../components/MaterialDesignIcon.vue";
-import { computed, createComponent, ref } from "@vue/composition-api";
-
-function handleClick(): void {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-}
+import MaterialDesignIcon from "@/components/MaterialDesignIcon.vue";
+import { computed, createComponent, value } from "vue-function-api";
 
 export default createComponent({
     components: {
         MaterialDesignIcon
     },
     setup() {
-        const isActive = ref(false);
+        const isActive = value(false);
 
         const classObject = computed(() => {
             return { "is-active": isActive.value };
         });
 
-        function handleWindowScroll(): void {
+        function handleClick() {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function handleWindowScroll() {
+            // FIXME: 150 should be in a common file somewhere
             isActive.value = window.scrollY > 150;
         }
 

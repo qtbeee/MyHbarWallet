@@ -1,54 +1,55 @@
 <template>
-    <InterfaceForm :title="$t('interfaceSendTransfer.title')">
+    <InterfaceForm title="Send Transfer">
         <TextInput
-            v-model="state.amount"
-            :error="state.amountErrorMessage"
-            :suffix="hbarSuffix"
-            :valid="isAmountValid"
-            action="Entire Balance"
+            v-model="amount"
             has-input
-            :label="$t('common.amount')"
+            label="Amount"
+            type="number"
+            action="Entire Balance"
+            :suffix="Unit.Hbar"
             show-validation
+            :valid="isAmountValid"
             @action="handleClickEntireBalance"
-            @input="handleInput"
         />
 
-        <IDInput
-            :error="state.idErrorMessage"
-            :valid="state.idValid"
-            can-copy
-            :is-open="state.successModalIsOpen"
-            :label="$t('common.toAccount')"
+        <TextInput
+            v-model="toAccount"
+            placeholder="shard.realm.account"
+            label="To Account"
             show-validation
-            @valid="handleValid"
-            @input="handleAccount"
+            :valid="isIdValid"
+            can-copy
         />
 
-        <OptionalMemoField v-model.trim="state.memo" />
+        <TextInput
+            v-model="maxFee"
+            label="Maximum Transaction Fee"
+            show-validation
+            :suffix="Unit.Tinybar"
+            :valid="true"
+        />
 
         <template v-slot:footer>
+            <!-- FIXME: Pluralize appropriately -->
             <Button
-                :busy="state.isBusy"
-                :disabled="!state.idValid || !isAmountValid"
-                :label="buttonLabel"
-                @click="handleShowSummary"
+                :busy="isBusy"
+                :label="
+                    amount > 0
+                        ? amount === 1
+                            ? 'Send 1 Hbar'
+                            : `Send ${truncate} Hbars`
+                        : 'Send Hbar'
+                "
+                :disabled="!isIdValid || !isAmountValid"
+                @click="handleSendTransfer"
             />
         </template>
 
         <ModalSendTransferSuccess
-            :amount="state.amount"
-            :is-open="state.successModalIsOpen"
-            :to-account="state.accountString"
+            :open="successModalIsOpen"
+            :to-account="toAccount"
+            :amount="amount"
             @change="handleSuccessModalChange"
-        />
-
-        <ModalFeeSummary
-            v-model="state.summaryIsOpen"
-            :account="summaryAccount"
-            :amount="summaryAmount"
-            :items="summaryItems"
-            tx-type="transfer"
-            @submit="handleSendTransfer"
         />
     </InterfaceForm>
 </template>
@@ -57,298 +58,144 @@
 import TextInput from "../components/TextInput.vue";
 import InterfaceForm from "../components/InterfaceForm.vue";
 import Button from "../components/Button.vue";
-import IDInput from "../components/IDInput.vue";
-import {
-    createComponent,
-    reactive,
-    computed,
-    SetupContext
-} from "@vue/composition-api";
-import store from "../store";
-import { ALERT, REFRESH_BALANCE_AND_RATE } from "../store/actions";
+import { createComponent, value, computed } from "vue-function-api";
+import store from "@/store";
+import { AccountId } from "hedera-sdk-js/src/Client";
+import { ALERT } from "@/store/actions";
 import ModalSendTransferSuccess from "../components/ModalSendTransferSuccess.vue";
-import { getValueOfUnit, Unit } from "../units";
-import BigNumber from "bignumber.js";
-import ModalFeeSummary, { Item } from "../components/ModalFeeSummary.vue";
-import { formatHbar, validateHbar } from "../formatter";
-import { Id } from "../store/modules/wallet";
-import {
-    ESTIMATED_FEE_HBAR,
-    ESTIMATED_FEE_TINYBAR,
-    MAX_FEE_TINYBAR
-} from "../store/getters";
-import { ResponseCodeEnum } from "@hashgraph/sdk";
-import { HederaError } from "@hashgraph/sdk";
-import OptionalMemoField from "../components/OptionalMemoField.vue";
-
-interface State {
-    amount: string | null;
-    account: Id | null;
-    accountString: string | null;
-    memo: string | null;
-    isBusy: boolean;
-    idErrorMessage: string | null;
-    amountErrorMessage: string | null;
-    successModalIsOpen: boolean;
-    summaryIsOpen: boolean;
-    idValid: boolean;
-}
-
-// const shardRealmAccountRegex = /^\d+\.\d+\.\d+$/;
-const estimatedFeeHbar = store.getters[ESTIMATED_FEE_HBAR];
-const estimatedFeeTinybar = store.getters[ESTIMATED_FEE_TINYBAR];
+import { CryptoTransferTransaction } from "hedera-sdk-js";
+import { Unit } from "@/components/UnitConverter.vue";
 
 export default createComponent({
     components: {
         TextInput,
         InterfaceForm,
         Button,
-        ModalSendTransferSuccess,
-        ModalFeeSummary,
-        OptionalMemoField,
-        IDInput
+        ModalSendTransferSuccess
     },
-    setup(_: object | null, context: SetupContext) {
-        const state = reactive<State>({
-            amount: "",
-            account: null,
-            accountString: "",
-            memo: "",
-            isBusy: false,
-            idErrorMessage: "",
-            amountErrorMessage: "",
-            successModalIsOpen: false,
-            summaryIsOpen: false,
-            idValid: false
-        });
+    setup(): {} {
+        const amount = value("0");
+        const toAccount = value("");
+        const idRegex = /^\d+\.\d+\.\d+$/;
+        const isBusy = value(false);
+        const maxFee = value("100000");
 
-        function handleAccount(value: string, account: Id | null): void {
-            state.idErrorMessage = "";
-            state.account = account;
-            if (state.account) {
-                state.accountString =
-                    state.account.shard +
-                    "." +
-                    state.account.realm +
-                    "." +
-                    state.account.account;
-            }
-        }
-
-        function handleValid(valid: boolean): void {
-            state.idValid = valid;
-        }
-
-        const isAmountValid = computed(() => {
-            if (state.amount) {
-                return (
-                    new BigNumber(state.amount).isGreaterThan(
-                        new BigNumber(0)
-                    ) && validateHbar(state.amount)
-                );
-            }
-        });
-
-        const amount = computed(() => {
-            if (state.amount) {
-                return formatHbar(new BigNumber(state.amount));
-            }
-        });
-
+        const isIdValid = computed(() => idRegex.test(toAccount.value));
+        const isAmountValid = computed(() => Number(amount.value) > 0);
+        const successModalIsOpen = value(false);
         const truncate = computed(() =>
-            amount.value && amount.value.length > 15
+            amount.value.length > 15
                 ? amount.value.substring(0, 13) + "..."
                 : amount.value
         );
 
-        const buttonLabel = computed(() =>
-            state.amount &&
-            new BigNumber(state.amount).isGreaterThan(new BigNumber(0))
-                ? context.root
-                      .$t("interfaceSendTransfer.sendHbars", [truncate.value])
-                      .toString()
-                : context.root.$t("interfaceSendTransfer.sendHbar").toString()
-        );
-
-        const summaryAmount = computed(() => {
-            return amount.value;
-        });
-
-        const summaryAccount = computed(() => {
-            return state.accountString;
-        });
-
-        const summaryItems = computed(
-            () =>
-                [
-                    {
-                        description: context.root.$t(
-                            "interfaceSendTransfer.transferAmount"
-                        ),
-                        value:
-                            isAmountValid && state.amount
-                                ? new BigNumber(state.amount)
-                                : new BigNumber(0)
-                    },
-                    {
-                        description: context.root.$t("common.estimatedFee"),
-                        value: estimatedFeeHbar
-                    }
-                ] as Item[]
-        );
-
-        async function handleClickEntireBalance(): Promise<void> {
-            const balance = store.state.wallet.balance;
-
-            if (balance == null) {
-                return;
-            }
-
-            const hbar = new BigNumber(balance)
-                .dividedBy(getValueOfUnit(Unit.Hbar))
-                .minus(estimatedFeeHbar);
-
-            state.amount = hbar.toString();
+        async function handleClickEntireBalance() {
+            const hbar = Number(store.state.wallet.balance || 0) / 100000000;
+            amount.value = hbar.toString();
         }
 
-        function handleShowSummary(): void {
-            state.summaryIsOpen = true;
-        }
-
-        function handleInput(): void {
-            state.amountErrorMessage = "";
-        }
-
-        async function handleSendTransfer(): Promise<void> {
-            state.isBusy = true;
-            if (store.state.wallet.session == null) {
-                throw new Error(
-                    "Session should not be null if inside Send Transfer"
-                );
-            }
-
-            if (!state.account || !state.amount)
-                throw new Error("Neither account nor amount should be null!");
-
-            const client = store.state.wallet.session.client;
+        async function handleSendTransfer() {
+            isBusy.value = true;
 
             try {
-                const recipient: import("@hashgraph/sdk").AccountId =
-                    state.account;
+                if (store.state.wallet.session == null) {
+                    throw new Error(
+                        "Session should not be null if inside Send Transfer"
+                    );
+                }
 
-                const sendAmountTinybar = new BigNumber(
-                    state.amount
-                ).multipliedBy(getValueOfUnit(Unit.Hbar));
+                const client = store.state.wallet.session.client;
+                const parts = toAccount.value.split(".");
 
-                const { CryptoTransferTransaction, Client } = await import(
-                    "@hashgraph/sdk"
-                );
+                if (!isAmountValid.value) {
+                    store.dispatch(ALERT, {
+                        level: "error",
+                        message: "Invalid amount"
+                    });
 
-                // Max Transaction Fee, otherwise known as Transaction Fee,
-                // is the max of 1 Hbar and the user's remaining balance
-                // Oh also, check for null balance to appease typescript
-                const safeBalance =
-                    store.state.wallet.balance == null
-                        ? new BigNumber(0)
-                        : store.state.wallet.balance;
+                    return;
+                }
 
-                const maxTxFeeTinybar = store.getters[MAX_FEE_TINYBAR](
-                    new BigNumber(safeBalance).minus(
-                        sendAmountTinybar.plus(estimatedFeeTinybar)
-                    )
-                );
+                if (!isIdValid.value) {
+                    store.dispatch(ALERT, {
+                        level: "error",
+                        message: "Invalid recipient Account ID"
+                    });
 
-                const tx = new CryptoTransferTransaction(client as InstanceType<
-                    typeof Client
-                >)
+                    return;
+                }
+
+                const recipient: AccountId = {
+                    shard: parseInt(parts[0]),
+                    realm: parseInt(parts[1]),
+                    account: parseInt(parts[2])
+                };
+
+                const sendAmount = BigInt(amount.value);
+                const sendAmountTinybar = sendAmount * BigInt(100000000);
+
+                await new CryptoTransferTransaction(client)
                     .addSender(
                         store.state.wallet.session.account,
                         sendAmountTinybar
                     )
                     .addRecipient(recipient, sendAmountTinybar)
-                    .setTransactionFee(maxTxFeeTinybar);
+                    .setTransactionFee(parseInt(maxFee.value))
+                    .build()
+                    .executeForReceipt();
 
-                if (state.memo !== "" && state.memo != null) {
-                    tx.setMemo(state.memo);
-                }
-
-                await tx.build().executeForReceipt();
-
-                // Refresh Balance
-                store.dispatch(REFRESH_BALANCE_AND_RATE);
-
-                // eslint-disable-next-line require-atomic-updates
-                state.successModalIsOpen = true;
+                successModalIsOpen.value = true;
             } catch (error) {
-                // eslint-disable-next-line require-atomic-updates
-                state.idErrorMessage = "";
-                // eslint-disable-next-line require-atomic-updates
-                state.amountErrorMessage = "";
-
-                if (error instanceof HederaError) {
-                    if (error.code === ResponseCodeEnum.INVALID_ACCOUNT_ID) {
-                        // eslint-disable-next-line require-atomic-updates
-                        state.idErrorMessage = context.root
-                            .$t("common.error.invalidAccount")
-                            .toString();
-                    } else if (
-                        error.code ===
-                        ResponseCodeEnum.ACCOUNT_REPEATED_IN_ACCOUNT_AMOUNTS
-                    ) {
-                        // eslint-disable-next-line require-atomic-updates
-                        state.idErrorMessage = context.root
-                            .$t("common.error.cannotSendHbarToYourself")
-                            .toString();
-                    } else if (
-                        error.code ===
-                        ResponseCodeEnum.INSUFFICIENT_ACCOUNT_BALANCE
-                    ) {
-                        state.amountErrorMessage = context.root
-                            .$t("common.error.insufficientBalance")
-                            .toString();
-                    } else {
-                        store.dispatch(ALERT, {
-                            message: `Received unhandled error from Hedera:  ${error.codeName}`,
-                            level: "error"
-                        });
-                        throw error;
-                    }
+                isBusy.value = false;
+                console.log(error);
+                if (error.toString().includes("INVALID_ACCOUNT_ID")) {
+                    store.dispatch(ALERT, {
+                        level: "error",
+                        message: "Invalid reipient Account ID"
+                    });
+                } else if (
+                    error
+                        .toString()
+                        .includes("ACCOUNT_REPEATED_IN_ACCOUNT_AMOUNTS")
+                ) {
+                    store.dispatch(ALERT, {
+                        level: "error",
+                        message: "Cannot send hbars to yourself"
+                    });
+                } else if (error.toString().includes("INSUFFICIENT_TX_FEE")) {
+                    store.dispatch(ALERT, {
+                        level: "error",
+                        message: "Insufficient transaction fee"
+                    });
                 } else {
-                    throw error;
+                    store.dispatch(ALERT, {
+                        level: "error",
+                        message: "Failed to send hbars"
+                    });
                 }
             } finally {
-                // eslint-disable-next-line require-atomic-updates
-                state.isBusy = false;
+                isBusy.value = false;
             }
         }
 
-        function handleSuccessModalChange(isOpen: boolean): void {
-            if (!isOpen) {
-                state.successModalIsOpen = isOpen;
-                state.isBusy = false;
-                state.amount = "";
-                state.memo = "";
-                state.accountString = "";
-            }
+        function handleSuccessModalChange(isOpen: boolean) {
+            successModalIsOpen.value = isOpen;
+            isBusy.value = false;
         }
 
         return {
-            state,
-            summaryAmount,
-            summaryAccount,
-            summaryItems,
-            buttonLabel,
+            amount,
+            maxFee,
+            isBusy,
+            toAccount,
+            isIdValid,
             isAmountValid,
-            hbarSuffix: Unit.Hbar,
-            tinybarSuffix: Unit.Tinybar,
-            handleShowSummary,
+            successModalIsOpen,
+            Unit,
             handleClickEntireBalance,
             handleSendTransfer,
             handleSuccessModalChange,
-            truncate,
-            handleInput,
-            handleValid,
-            handleAccount
+            truncate
         };
     }
 });

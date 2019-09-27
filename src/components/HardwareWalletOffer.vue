@@ -1,9 +1,7 @@
 <template>
     <div class="hardware-wallet-offer">
         <div class="offer-description">
-            <div class="starting-from">
-                {{ $t("hardwareWalletOffer.startingFrom") }}
-            </div>
+            <div class="starting-from">Starting From</div>
             <div class="cost-container">
                 {{ currency }}<span class="cost">{{ cost }}</span>
             </div>
@@ -14,7 +12,7 @@
                 class="green-link"
                 :href="moreInfo"
             >
-                {{ $t("hardwareWalletOffer.moreInformation") }} >
+                More information >
             </a>
         </div>
         <a :href="moreInfo" rel="noopener" target="_blank">
@@ -24,7 +22,7 @@
 </template>
 
 <script lang="ts">
-import { createComponent } from "@vue/composition-api";
+import { createComponent } from "vue-function-api";
 
 export default createComponent({
     props: {

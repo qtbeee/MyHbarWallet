@@ -1,44 +1,36 @@
 <template>
     <Modal
-        :title="$t('modalConfirmSignMessage.title')"
+        title="Confirmation"
         :is-open="isOpen"
         large
         @change="this.$listeners.change"
     >
-        <p class="title">{{ $t("modalConfirmSignMessage.signingKey") }}</p>
+        <p class="title">Signing Address</p>
         <div class="item account">
             <img
                 class="account-image"
-                :src="'https://api.adorable.io/avatars/285/' + publicKey"
+                :src="'https://api.adorable.io/avatars/285/' + rawPublicKey"
             />
-            <span class="account-key"> {{ publicKey }} </span>
+            <span class="account-key"> {{ rawPublicKey }} </span>
         </div>
-        <p class="title">{{ $t("common.message") }}</p>
+        <p class="title">Message</p>
         <ReadOnlyInput class="item" :value="message" />
-        <p class="title">{{ $t("modalConfirmSignMessage.messageInHex") }}</p>
+        <p class="title">Message in hex</p>
         <ReadOnlyInput class="item" :value="hexMessage" />
 
         <div class="center">
-            <Button
-                :label="$t('modalConfirmSignMessage.confirmSigning')"
-                @click="handleConfirm"
-            ></Button>
+            <Button label="Confirm Signing" @click="handleConfirm"></Button>
         </div>
     </Modal>
 </template>
 <script lang="ts">
-import { createComponent, computed, SetupContext } from "@vue/composition-api";
+import { createComponent, PropType, computed } from "vue-function-api";
 
 import Modal from "../components/Modal.vue";
 import Button from "../components/Button.vue";
 import ReadOnlyInput from "../components/ReadOnlyInput.vue";
 
-function hexEncode(str: string): string {
-    return unescape(encodeURIComponent(str))
-        .split("")
-        .map(v => v.charCodeAt(0).toString(16))
-        .join("");
-}
+const ED25519_PREFIX = "302a300506032b6570032100";
 
 export default createComponent({
     components: {
@@ -47,25 +39,34 @@ export default createComponent({
         ReadOnlyInput
     },
     props: {
-        isOpen: Boolean,
-        message: String,
-        publicKey: String
+        isOpen: (Boolean as unknown) as PropType<boolean>,
+        message: (String as unknown) as PropType<string>,
+        publicKey: (String as unknown) as PropType<string>
     },
-    setup(
-        props: {
-            isOpen: boolean;
-            message: string;
-            publicKey: string;
-        },
-        context: SetupContext
-    ) {
-        function handleConfirm(): void {
+    setup(props, context) {
+        const rawPublicKey = computed(() => {
+            let publickey = props.publicKey;
+            if (publickey.startsWith(ED25519_PREFIX, 0)) {
+                publickey = publickey.slice(ED25519_PREFIX.length);
+            }
+            return publickey;
+        });
+
+        function hexEncode(str: string) {
+            return unescape(encodeURIComponent(str))
+                .split("")
+                .map(v => v.charCodeAt(0).toString(16))
+                .join("");
+        }
+
+        function handleConfirm() {
             context.emit("confirm");
         }
 
         const hexMessage = computed(() => `0x${hexEncode(props.message)}`);
         return {
             hexMessage,
+            rawPublicKey,
             handleConfirm
         };
     }
@@ -96,7 +97,7 @@ export default createComponent({
     border: 0 solid var(--color-white);
     border-radius: 50%;
     flex-shrink: 0;
-    margin-inline-end: 20px;
+    margin-inline-end: 10px;
     user-select: none;
 }
 

@@ -4,34 +4,32 @@
         <div class="content">
             <div class="top">
                 <div class="title">
-                    {{ $t("balanceCard.balance") }}
+                    Balance
                 </div>
                 <div v-if="hasFetchedBalance" class="subtitle" type="string">
-                    <div class="hbar-balance">{{ balanceHBarFormatted }} ℏ</div>
-                    <div v-if="hasFetchedRate" class="usd-balance">
-                        {{ balanceUSDFormatted }}
-                    </div>
+                    <div class="hbar-balance">{{ balanceHBar }} ℏ</div>
+                    <div class="usd-balance">{{ balanceUSD }}</div>
                 </div>
                 <div v-else class="subtitle-null" type="string">
-                    {{ $t("balanceCard.unknown") }}
+                    Unknown
                 </div>
             </div>
             <div class="actions">
                 <MaterialDesignIcon
-                    v-if="state.isBusy"
-                    :icon="mdiLoading"
+                    v-if="isBusy"
                     class="spinner"
+                    :icon="mdiLoading"
                     spin
                 />
                 <Tooltip
                     v-else
-                    :message="$t('balanceCard.refreshBalance')"
-                    :pinnable="false"
                     class="action"
+                    :pinnable="false"
+                    message="Refresh Balance"
                 >
                     <MaterialDesignIcon
-                        :icon="mdiRefresh"
                         class="refresh-icon"
+                        :icon="mdiRefresh"
                         @click="handleRefreshBalance"
                     />
                 </Tooltip>
@@ -41,68 +39,54 @@
 </template>
 
 <script lang="ts">
-import MaterialDesignIcon from "../components/MaterialDesignIcon.vue";
+import MaterialDesignIcon from "@/components/MaterialDesignIcon.vue";
 import { mdiLoading, mdiRefresh } from "@mdi/js";
 import Tooltip from "./Tooltip.vue";
-import { computed, createComponent, reactive } from "@vue/composition-api";
+import { computed, createComponent, PropType, value } from "vue-function-api";
 import walletHbar from "../assets/wallet-hbar.svg";
 import store from "../store";
-import { REFRESH_BALANCE_AND_RATE } from "../store/actions";
-import { formatHbar, formatUSD } from "../formatter";
-import BigNumber from "bignumber.js";
+import { REFRESH_BALANCE } from "../store/actions";
+
+const formatter = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD"
+});
+
+interface Props {
+    balance: number;
+}
 
 export default createComponent({
     components: {
         MaterialDesignIcon,
         Tooltip
     },
-    setup() {
-        const state = reactive({
-            isBusy: false
-        });
-
+    setup(props: Props) {
+        const isBusy = value(false);
         const hasFetchedBalance = computed(
             () => store.state.wallet.balance != null
         );
 
-        const hasFetchedRate = computed(
-            () => store.state.wallet.exchangeRate != null
-        );
-
-        const balanceHbar = computed(() =>
-            (store.state.wallet.balance || new BigNumber(0)).div(100000000)
-        );
-
-        const exchangeRate = computed(
-            () => (store.state.wallet.exchangeRate || new BigNumber(0)).div(1) // computed with null | undefined is broken
-        );
-
-        const balanceHBarFormatted = computed(() => {
-            const balance = balanceHbar.value;
-            return formatHbar(
-                balance.isLessThan(0.0001) ? balance : balance.decimalPlaces(4)
-            );
+        const balanceHBar = computed(() => {
+            const hbar = Number(store.state.wallet.balance || 0) / 100000000;
+            return hbar < 0.0001 ? hbar : hbar.toFixed(4);
         });
 
-        const balanceUSDFormatted = computed(() => {
-            const rate = exchangeRate.value;
-
-            if (rate.isGreaterThan(0)) {
-                const balanceUSD = balanceHbar.value.multipliedBy(rate);
-                return "≈ " + formatUSD(balanceUSD);
-            }
-
-            return "";
+        const balanceUSD = computed(() => {
+            // FIXME: once the unit store exists, use it
+            const usd =
+                (Number(store.state.wallet.balance || 0) / 100000000) * 0.12;
+            return formatter.format(usd);
         });
 
-        async function handleRefreshBalance(): Promise<void> {
-            state.isBusy = true;
+        async function handleRefreshBalance() {
+            isBusy.value = true;
 
             try {
-                await store.dispatch(REFRESH_BALANCE_AND_RATE);
+                await store.dispatch(REFRESH_BALANCE);
             } finally {
                 setTimeout(() => {
-                    state.isBusy = false;
+                    isBusy.value = false;
                 }, 75);
             }
         }
@@ -110,20 +94,18 @@ export default createComponent({
         return {
             mdiRefresh,
             mdiLoading,
-            walletHbar,
-            state,
+            isBusy,
             hasFetchedBalance,
-            hasFetchedRate,
             handleRefreshBalance,
-            balanceHbar,
-            balanceHBarFormatted,
-            balanceUSDFormatted
+            balanceUSD,
+            walletHbar,
+            balanceHBar
         };
     }
 });
 </script>
 
-<style lang="postcss" scoped>
+<style scoped lang="postcss">
 .balance {
     background-color: var(--color-byzantine-night-blue);
     border-radius: 4px;

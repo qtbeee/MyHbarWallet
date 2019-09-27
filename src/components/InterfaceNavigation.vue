@@ -1,7 +1,7 @@
 <template>
     <div>
         <div :class="classObject" class="side-nav-top">
-            <img alt="" class="logo" src="../assets/myhbarwallet-logo.svg" />
+            <div class="logo">My<strong>Hedera</strong>Wallet</div>
             <MaterialDesignIcon
                 class="close"
                 :icon="mdiClose"
@@ -12,23 +12,21 @@
             <InterfaceNavigationSection
                 :image="sendImage"
                 :image-active="sendImageActive"
-                :title="$t('interfaceNavigation.crypto')"
+                title="Crypto"
                 :routes="cryptoRoutes"
             />
 
             <InterfaceNavigationSection
-                v-if="false"
                 :image="contractImage"
                 :image-active="contractImageActive"
-                :title="$t('interfaceNavigation.contract')"
+                title="Contract"
                 :routes="contractRoutes"
             />
 
             <InterfaceNavigationSection
-                v-if="false"
                 :image="messageImage"
                 :image-active="messageImageActive"
-                :title="$t('common.message')"
+                title="Message"
                 :routes="messageRoutes"
             />
         </nav>
@@ -48,17 +46,11 @@ import contractImage from "../assets/contract.svg";
 import contractImageActive from "../assets/contract-active.svg";
 import messageImage from "../assets/message.svg";
 import messageImageActive from "../assets/message-active.svg";
-import store from "../store";
-import { SET_INTERFACE_MENU_IS_OPEN } from "../store/mutations";
-import MaterialDesignIcon from "../components/MaterialDesignIcon.vue";
+import store from "@/store";
+import { SET_INTERFACE_MENU_IS_OPEN } from "@/store/mutations";
+import MaterialDesignIcon from "@/components/MaterialDesignIcon.vue";
 import { mdiClose } from "@mdi/js";
-import { createComponent, computed } from "@vue/composition-api";
-
-// Yes, it is used
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function handleClick(): void {
-    store.commit(SET_INTERFACE_MENU_IS_OPEN, false);
-}
+import { createComponent, computed } from "vue-function-api";
 
 export default createComponent({
     components: {
@@ -67,7 +59,7 @@ export default createComponent({
     },
     setup() {
         const cryptoRoutes = [
-            { name: "send-transfer", label: "Send" },
+            { name: "send-transfer", label: "Send Hbars" },
             { name: "create-account-transaction", label: "Create Account" }
         ];
 
@@ -88,7 +80,12 @@ export default createComponent({
             else return "menu-closed";
         });
 
+        function handleClick() {
+            store.commit(SET_INTERFACE_MENU_IS_OPEN, false);
+        }
+
         return {
+            handleClick,
             cryptoRoutes,
             sendImage,
             sendImageActive,
@@ -99,8 +96,7 @@ export default createComponent({
             messageImage,
             messageImageActive,
             mdiClose,
-            classObject,
-            handleClick
+            classObject
         };
     }
 });
@@ -183,7 +179,6 @@ nav {
 
 .logo {
     color: var(--color-china-blue);
-    height: 50px;
     padding-inline-start: 25px;
 
     & > strong {

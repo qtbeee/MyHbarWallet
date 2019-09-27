@@ -2,9 +2,10 @@
     <CirclePage>
         <div class="wrap">
             <div class="title-wrap">
-                <div class="page-title">{{ $t("convertUnits.title") }}</div>
+                <div class="page-title">Convert Units</div>
                 <div class="page-subtitle">
-                    {{ $t("convertUnits.ourHelpfulConversionTool") }}
+                    Our helpful conversion tool and ether unit reference allow
+                    you to calculate the total cost of your transactions.
                 </div>
             </div>
 
@@ -13,25 +14,19 @@
             </div>
 
             <div class="hbar-unit-reference-guide">
-                <div class="block-title">
-                    {{ $t("convertUnits.hbarUnitReferenceGuide") }}
-                </div>
+                <div class="block-title">Hbar Unit Reference Guide</div>
 
                 <div class="unit-table">
                     <table>
                         <tbody>
                             <tr v-for="hu in hbarUnitRef" :key="hu.key">
                                 <td>{{ hu.name }}</td>
-                                <template>
-                                    <div class="sub-row-container">
-                                        <td class="amount">
-                                            {{ hu.amount }} {{ hu.symbol }}
-                                        </td>
-                                        <td class="amount-hbar">
-                                            {{ hu.amountInHbar }} ℏ
-                                        </td>
-                                    </div>
-                                </template>
+                                <td class="amount">
+                                    {{ hu.amount }} {{ hu.symbol }}
+                                </td>
+                                <td class="amount-hbar">
+                                    {{ hu.amountInHbar }} ℏ
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -44,7 +39,7 @@
 <script lang="ts">
 import UnitConverter from "../components/UnitConverter.vue";
 import CirclePage from "../components/CirclePage.vue";
-import { createComponent } from "@vue/composition-api";
+import { createComponent } from "vue-function-api";
 
 export default createComponent({
     components: {
@@ -106,30 +101,18 @@ export default createComponent({
     margin: 0 auto;
     max-width: 1024px;
     padding: 100px 20px;
-
-    @media (max-width: 500px) {
-        padding: 5px 20px;
-    }
 }
 
 .title-wrap {
     margin-block-end: 60px;
     margin-block-start: 0;
     text-align: center;
-
-    @media (max-width: 500px) {
-        margin-block-end: 15px;
-    }
 }
 
 .page-title {
     font-size: 45px;
     font-weight: 500;
     margin: 0;
-
-    @media (max-width: 500px) {
-        font-size: 40px;
-    }
 }
 
 .page-subtitle {
@@ -138,17 +121,10 @@ export default createComponent({
     margin: 0 auto;
     margin-block-start: 20px;
     max-width: 700px;
-
-    @media (max-width: 500px) {
-        margin-block-start: 5px;
-    }
 }
 
 .hbar-unit-reference-guide {
-    background-color: var(--color-boysenberry-shadow-transparent);
-    border-radius: 5px;
     margin-block-start: 60px;
-    padding-block-start: 20px;
 }
 
 .block-title {
@@ -170,44 +146,11 @@ table {
 tr {
     border-bottom: 1px solid var(--color-jupiter);
     position: relative;
-
-    @media (max-width: 500px) {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 10px 0;
-    }
 }
 
 td {
     padding: 18px 10px;
     position: relative;
-
-    @media (max-width: 500px) {
-        padding: 0 10px;
-    }
-}
-
-tr > td:first-child {
-    @media (max-width: 500px) {
-        font-weight: 500;
-    }
-}
-
-.sub-row-container > td:last-child {
-    @media (max-width: 500px) {
-        text-align: end;
-    }
-
-    @media (max-width: 336px) {
-        white-space: nowrap;
-    }
-}
-
-.sub-row-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    margin-block-start: 5px;
 }
 
 span {

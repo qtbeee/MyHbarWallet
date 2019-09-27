@@ -14,8 +14,8 @@
 </template>
 
 <script lang="ts">
-import { createComponent, computed, PropType } from "@vue/composition-api";
-import MaterialDesignIcon from "../components/MaterialDesignIcon.vue";
+import { createComponent, computed, PropType } from "vue-function-api";
+import MaterialDesignIcon from "@/components/MaterialDesignIcon.vue";
 import {
     mdiClose,
     mdiCloseCircleOutline,
@@ -23,8 +23,8 @@ import {
     mdiAlertOutline,
     mdiCheckCircleOutline
 } from "@mdi/js";
-import { REMOVE_ALERT } from "../store/mutations";
-import store from "../store";
+import { REMOVE_ALERT } from "@/store/mutations";
+import store from "@/store";
 
 interface Props {
     id: number;
@@ -56,9 +56,9 @@ export default createComponent({
             }
         });
 
-        function destroyMe(): void {
+        const destroyMe = () => {
             store.commit(REMOVE_ALERT, props.id);
-        }
+        };
 
         return {
             messageIcon,
@@ -85,20 +85,7 @@ export default createComponent({
     overflow: hidden;
     padding: 6px 20px;
     user-select: none;
-    width: 375px;
-
-    @media (max-width: 1024px) {
-        min-height: 50px;
-        padding: 6px 10px;
-        width: 200px;
-    }
-
-    @media (max-width: 425px) {
-        margin-block-start: 0;
-        min-height: 50px;
-        padding: 6px 10px;
-        width: calc(100% - 10px);
-    }
+    width: 325px;
 }
 
 .close {

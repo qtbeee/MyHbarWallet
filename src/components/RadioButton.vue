@@ -1,8 +1,7 @@
 <template>
-    <label class="radio-button" :for="value" :class="{ selected }">
+    <label class="radio-button" :class="{ selected }">
         <img alt="" class="icon" :src="image" />
         <input
-            :id="value"
             type="radio"
             :name="name"
             :value="value"
@@ -20,9 +19,9 @@
 </template>
 
 <script lang="ts">
-import MaterialDesignIcon from "../components/MaterialDesignIcon.vue";
+import MaterialDesignIcon from "@/components/MaterialDesignIcon.vue";
 import { mdiCheckCircle } from "@mdi/js";
-import { createComponent, computed } from "@vue/composition-api";
+import { createComponent, computed } from "vue-function-api";
 
 export default createComponent({
     components: {
@@ -94,7 +93,7 @@ export default createComponent({
 }
 
 .input {
-    opacity: 0;
     position: absolute;
+    visibility: hidden;
 }
 </style>

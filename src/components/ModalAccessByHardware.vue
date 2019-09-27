@@ -1,27 +1,28 @@
 <template>
     <Modal
         :is-open="isOpen"
-        :title="$t('modalAccessByHardware.title')"
+        title="Access by hardware"
         @change="this.$listeners.change"
     >
-        <form class="modal-access-by-hardware" @submit.prevent="">
+        <div class="modal-access-by-hardware">
             <RadioButtonGroup
-                v-model="state.optionSelected"
+                v-model="optionSelected"
                 name="hardware-access-option"
                 :options="options.filter(option => option.supported)"
             />
             <Button
-                :disabled="state.optionSelected.length === 0"
+                :disabled="optionSelected.length === 0"
                 class="button-choose-a-hardware"
-                :label="$t('modalAccessByHardware.chooseAHardware')"
+                label="Choose a Hardware"
+                @click="handleSubmit"
             />
             <CustomerSupportLink />
-        </form>
+        </div>
     </Modal>
 </template>
 
 <script lang="ts">
-import { createComponent, reactive, watch } from "@vue/composition-api";
+import { createComponent, value } from "vue-function-api";
 import Button from "../components/Button.vue";
 import RadioButtonGroup from "../components/RadioButtonGroup.vue";
 import imageLedger from "../assets/button-ledger.svg";
@@ -32,6 +33,8 @@ import imageSecalot from "../assets/button-secalot.svg";
 import imageKeepKey from "../assets/button-keepkey.svg";
 import Modal from "../components/Modal.vue";
 import CustomerSupportLink from "../components/CustomerSupportLink.vue";
+import * as trezor from "@/trezor";
+import { SigningOpts } from "hedera-sdk-js/src/Client";
 
 export default createComponent({
     components: {
@@ -47,11 +50,8 @@ export default createComponent({
     props: {
         isOpen: { type: Boolean }
     },
-    setup(props: { isOpen: boolean }) {
-        const state = reactive({
-            optionSelected: ""
-        });
-
+    setup(props, context) {
+        const optionSelected = value("");
         const options = [
             {
                 supported: false,
@@ -91,18 +91,20 @@ export default createComponent({
             }
         ];
 
-        watch(
-            () => props.isOpen,
-            (newVal: boolean) => {
-                if (newVal) {
-                    state.optionSelected = "";
-                }
-            }
-        );
+        async function handleSubmit() {
+            const newPublicKey = await trezor.getPublicKey();
+            const newSigningOptions: SigningOpts = {
+                publicKey: newPublicKey,
+                signer: await trezor.makeSigner()
+            };
+
+            context.emit("submit", newPublicKey, newSigningOptions);
+        }
 
         return {
-            state,
-            options
+            optionSelected,
+            options,
+            handleSubmit
         };
     }
 });

@@ -1,33 +1,29 @@
 <template>
     <Modal
-        :is-open="state.isOpen"
+        :is-open="state.modalIsOpen"
         :not-closable="state.isBusy"
-        :title="$t('modalAccessByPrivateKey.title')"
+        title="Access by Private Key"
         @change="handleModalChangeIsOpen"
     >
         <template v-slot:banner>
             <Warning />
         </template>
-        <form
-            class="modal-access-by-private-key"
-            @submit.prevent="$emit('submit')"
-        >
+        <div class="modal-access-by-private-key">
             <TextInput
                 ref="input"
-                :placeholder="$t('modalAccessByPrivateKey.enterPrivateKey')"
-                :value="state.rawPrivateKey"
-                :valid="valid"
-                show-validation
+                placeholder="Enter Private Key"
+                :value="state.privateKey"
                 @input="handlePrivateKeyInput"
             />
             <Button
                 class="button-access-wallet"
-                :label="$t('modalAccessByPrivateKey.accessAccount')"
+                label="Access Account"
                 :busy="state.isBusy"
                 :disabled="!valid"
+                @click="$emit('submit')"
             />
             <CustomerSupportLink />
-        </form>
+        </div>
     </Modal>
 </template>
 
@@ -39,17 +35,13 @@ import TextInput, {
 import Button from "../components/Button.vue";
 import Modal from "../components/Modal.vue";
 import CustomerSupportLink from "../components/CustomerSupportLink.vue";
-import {
-    createComponent,
-    SetupContext,
-    PropType,
-    watch,
-    ref
-} from "@vue/composition-api";
+import { computed, createComponent, PropType, watch } from "vue-function-api";
+import { SetupContext } from "vue-function-api/dist/types/vue";
+import { decodePrivateKey } from "hedera-sdk-js";
 
 export interface State {
-    isOpen: boolean;
-    rawPrivateKey: string;
+    modalIsOpen: boolean;
+    privateKey: string;
     isBusy: boolean;
 }
 
@@ -74,68 +66,32 @@ export default createComponent({
     props: {
         state: (Object as unknown) as PropType<State>
     },
-    setup(props: { state: State }, context: SetupContext) {
-        const valid = ref<boolean>(false);
-
-        // No, it cannot be moved to enclosing scope
-        // eslint-disable-next-line unicorn/consistent-function-scoping
-        async function isValid(): Promise<boolean> {
+    setup(props, context) {
+        const valid = computed(() => {
             try {
-                const { Ed25519PrivateKey } = await (import(
-                    "@hashgraph/sdk"
-                ) as Promise<typeof import("@hashgraph/sdk")>);
-
-                Ed25519PrivateKey.fromString(props.state.rawPrivateKey);
+                // TODO: Perhaps debounce this?
+                // TODO: Find a clean way to re-use the derived public key back in AccessMyAccount
+                decodePrivateKey(props.state.privateKey);
                 return true;
-            } catch (error) {
-                if (error instanceof Error) {
-                    // The exception message changes depending on the input
-                    if (
-                        error.message ===
-                        "invalid private key: " + props.state.rawPrivateKey
-                    ) {
-                        return false;
-                    }
-                }
-
-                throw error;
+            } catch {
+                return false;
             }
+        });
+
+        function handleModalChangeIsOpen(isOpen: boolean) {
+            context.emit("change", { ...props.state, modalIsOpen: isOpen });
         }
 
-        watch(
-            () => props.state.rawPrivateKey,
-            () => {
-                if (props.state.rawPrivateKey.length === 0) {
-                    // Back out now if we have an empty value
-                    valid.value = false;
-                }
-
-                isValid().then(result => {
-                    valid.value = result;
-                });
-            }
-        );
-
-        function handleModalChangeIsOpen(isOpen: boolean): void {
-            context.emit("change", { ...props.state, isOpen });
-        }
-
-        function handlePrivateKeyInput(rawPrivateKey: string): void {
-            context.emit("change", { ...props.state, rawPrivateKey });
+        function handlePrivateKeyInput(privateKey: string) {
+            context.emit("change", { ...props.state, privateKey });
         }
 
         // Focus the single text input when the modal is opened
         watch(
-            () => props.state.isOpen,
+            () => props.state.modalIsOpen,
             (newVal: boolean) => {
                 if (newVal) {
-                    context.emit("change", {
-                        ...props.state,
-                        rawPrivateKey: ""
-                    });
-                    if ((context as Context).refs.input != undefined) {
-                        (context as Context).refs.input.focus();
-                    }
+                    (context as Context).refs.input.focus();
                 }
             }
         );

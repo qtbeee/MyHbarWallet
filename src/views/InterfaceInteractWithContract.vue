@@ -1,16 +1,16 @@
 <template>
     <div class="interact-with-contract">
-        <InterfaceForm :title="$t('interfaceInteractWithContract.title')">
+        <InterfaceForm title="Interact With Contract">
             <TextInput
                 v-model.trim="contractId"
-                :label="$t('common.contract')"
-                :placeholder="$t('common.accountSyntax')"
+                label="Contract"
+                placeholder="shard.realm.contract"
                 show-validation
                 :valid="isIdValid"
             />
             <TextInput
                 v-model.trim="abi"
-                :label="'ABI/JSON' + $t('common.interface')"
+                label="ABI/JSON Interface"
                 can-copy
                 can-clear
                 multiline
@@ -20,7 +20,7 @@
 
             <template v-slot:footer>
                 <Button
-                    :label="$t('common.continue')"
+                    label="Continue"
                     :trailing-icon="arrowRight"
                     :disabled="!isFormValid"
                 />
@@ -30,10 +30,10 @@
 </template>
 
 <script lang="ts">
-import { computed, createComponent, reactive } from "@vue/composition-api";
-import InterfaceForm from "../components/InterfaceForm.vue";
-import TextInput from "../components/TextInput.vue";
-import Button from "../components/Button.vue";
+import { computed, createComponent, value } from "vue-function-api";
+import InterfaceForm from "@/components/InterfaceForm.vue";
+import TextInput from "@/components/TextInput.vue";
+import Button from "@/components/Button.vue";
 import { mdiArrowRight } from "@mdi/js";
 
 export default createComponent({
@@ -46,16 +46,14 @@ export default createComponent({
         const arrowRight = mdiArrowRight;
         const idRegex = /^\d+\.\d+\.\d+$/;
 
-        const state = reactive({
-            contractId: "",
-            abi: ""
-        });
+        const contractId = value("");
+        const abi = value("");
 
-        const isIdValid = computed(() => idRegex.test(state.contractId));
+        const isIdValid = computed(() => idRegex.test(contractId.value));
 
         const isJsonValid = computed(() => {
             try {
-                JSON.parse(state.abi);
+                JSON.parse(abi.value);
                 return true;
             } catch (error) {
                 return false;
@@ -67,7 +65,8 @@ export default createComponent({
 
         return {
             arrowRight,
-            state,
+            contractId,
+            abi,
             isIdValid,
             isJsonValid,
             isFormValid

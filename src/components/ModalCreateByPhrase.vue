@@ -2,7 +2,7 @@
     <div class="modal-create-by-mnemonic-phrase">
         <Modal
             :is-open="isOpen"
-            :title="$t('modalCreateByPhrase.title')"
+            title="Create by Mnemonic Phrase"
             @change="this.$listeners.change"
         >
             <template v-slot:banner>
@@ -10,13 +10,9 @@
             </template>
             <div class="password-info-header-wrapper">
                 <div class="password-info-header">
-                    {{ $t("common.password.yourPassword") }}
+                    Your Password
                     <InfoButton
-                        :message="
-                            $t(
-                                'common.password.thisPasswordEncryptsYourPrivateKey'
-                            )
-                        "
+                        message="This password encrypts your private key. This does not act as a seed to generate your keys."
                     />
                 </div>
             </div>
@@ -24,35 +20,33 @@
                 <div class="spacer" />
                 <div class="random-button" @click="randomizeMnemonic">
                     <MaterialDesignIcon :size="16" :icon="cachedIcon" />
-                    {{ $t("modalCreateByPhrase.random") }}
+                    Random
                 </div>
             </div>
 
             <MnemonicInput
                 class="phrase-input"
-                :words="24"
+                :words="numberWords"
                 :value="words"
                 :editable="false"
             />
 
             <HiddenPasswordInput
                 v-if="false"
-                :value="state.passwordValue"
-                :password-warning="$t('modalCreateByPhrase.passwordWarning')"
+                :value="passwordValue"
+                password-warning="If you choose to include a password, understand you will ALWAYS need this password with your mnemonic phrase. You can not change it. It becomes a permanent part of your phrase. Read more about the password option here."
                 @input="handlePasswordChange"
             />
 
             <div class="continue-btn-container">
                 <Button
-                    :busy="state.isBusy"
+                    :busy="isBusy"
                     class="continue-btn"
-                    :label="
-                        $t('modalCreateByPhrase.iWroteDownMyMnemonicPhrase')
-                    "
+                    label="I Wrote Down My Mnemonic Phrase"
                     @click="handleClick"
                 />
                 <ModalVerifyPhrase
-                    v-model="state.verifyPhraseIsOpen"
+                    v-model="verifyPhraseIsOpen"
                     :words="words"
                     @success="handleVerifySuccess"
                 />
@@ -63,23 +57,16 @@
                 />
 
                 <ModalPhrasePrintPreview
-                    v-model="state.printModalIsOpen"
+                    v-model="printModalIsOpen"
                     :words="words"
                 />
             </div>
 
             <div class="warning-container">
-                <div
-                    class="do-not-forget"
-                    v-html="
-                        formatRich(
-                            $t(
-                                'modalCreateByPhrase.doNotForgetToSaveYourPassword'
-                            ).toString(),
-                            { strongClass: 'important' }
-                        )
-                    "
-                />
+                <p class="do-not-forget">
+                    <span class="important"> DO NOT FORGET</span> to save your
+                    password. You will need this
+                </p>
             </div>
         </Modal>
     </div>
@@ -97,20 +84,21 @@ import InfoButton from "../components/InfoButton.vue";
 import ModalPhrasePrintPreview from "../components/ModalPhrasePrintPreview.vue";
 import printIcon from "../assets/icon-printer.svg";
 import { mdiCached } from "@mdi/js";
-import ModalVerifyPhrase from "../components/ModalVerifyPhrase.vue";
+import ModalVerifyPhrase from "@/components/ModalVerifyPhrase.vue";
 import {
     computed,
     createComponent,
     onMounted,
     PropType,
-    reactive,
-    SetupContext
-} from "@vue/composition-api";
-import { formatRich } from "../formatter";
-
-interface Props {
-    isOpen: boolean;
-}
+    value,
+    Wrapper
+} from "vue-function-api";
+import {
+    generateMnemonic,
+    MnemonicResult,
+    KeyResult,
+    encodePublicKey
+} from "hedera-sdk-js/src/Keys";
 
 export default createComponent({
     components: {
@@ -134,20 +122,16 @@ export default createComponent({
             boolean
         >
     },
-    setup(props: Props, context: SetupContext) {
+    setup(props, context) {
         const numberWords = 24;
-        const state = reactive({
-            isBusy: false,
-            passwordValue: "",
-            result: null as
-                | import("@hashgraph/sdk/src/Keys").MnemonicResult
-                | null,
-            printModalIsOpen: false,
-            verifyPhraseIsOpen: false
-        });
+        const isBusy = value(false);
+        const passwordValue = value("");
+        const result: Wrapper<MnemonicResult | null> = value(null);
+        const printModalIsOpen = value(false);
+        const verifyPhraseIsOpen = value(false);
 
         const words = computed(() => {
-            return state.result ? state.result.mnemonic.split(" ") : [];
+            return result.value ? result.value.mnemonic.split(" ") : [];
         });
 
         const cachedIcon = computed(() => {
@@ -157,40 +141,37 @@ export default createComponent({
             return printIcon;
         });
 
-        function handlePasswordChange(password: string): void {
-            state.passwordValue = password;
+        function handlePasswordChange(password: string) {
+            passwordValue.value = password;
         }
 
-        function handlePrintModal(): void {
-            state.printModalIsOpen = !state.printModalIsOpen;
+        function handlePrintModal() {
+            printModalIsOpen.value = !printModalIsOpen.value;
         }
 
-        function handleClick(): void {
-            state.verifyPhraseIsOpen = true;
+        function handleClick() {
+            verifyPhraseIsOpen.value = true;
         }
 
-        async function randomizeMnemonic(): Promise<void> {
-            const { generateMnemonic } = await (import(
-                "@hashgraph/sdk"
-            ) as Promise<typeof import("@hashgraph/sdk")>);
-            state.result = generateMnemonic();
+        function randomizeMnemonic() {
+            result.value = generateMnemonic();
         }
 
-        async function handleVerifySuccess(): Promise<void> {
-            if (state.result == null) return;
+        async function handleVerifySuccess() {
+            if (result.value == null) return;
 
-            state.isBusy = true;
-            state.verifyPhraseIsOpen = false;
+            isBusy.value = true;
+            verifyPhraseIsOpen.value = false;
 
-            // `.derive(0)` to generate the same key as the default account of the mobile wallet
-            const key: import("@hashgraph/sdk/src/Keys").Ed25519PrivateKey = (await state.result.generateKey()).derive(
-                0
+            const key: KeyResult = await result.value.generateKey();
+
+            isBusy.value = false;
+
+            context.emit(
+                "submit",
+                key.keyString,
+                encodePublicKey(key.publicKey)
             );
-
-            // eslint-disable-next-line require-atomic-updates
-            state.isBusy = false;
-
-            context.emit("submit", key);
         }
 
         onMounted(() => {
@@ -198,17 +179,19 @@ export default createComponent({
         });
 
         return {
-            state,
             numberWords,
+            passwordValue,
             words,
+            isBusy,
             cachedIcon,
             printerIcon,
+            printModalIsOpen,
+            verifyPhraseIsOpen,
             handlePrintModal,
             handlePasswordChange,
             handleClick,
             randomizeMnemonic,
-            handleVerifySuccess,
-            formatRich
+            handleVerifySuccess
         };
     }
 });
@@ -268,6 +251,11 @@ export default createComponent({
     user-select: none;
 }
 
+.important {
+    color: var(--color-lightish-red);
+    font-weight: 500;
+}
+
 .printer-button {
     cursor: pointer;
     height: 30px;
@@ -278,11 +266,6 @@ export default createComponent({
     color: var(--color-china-blue);
     font-size: 14px;
     margin-inline: auto;
-
-    & >>> .important {
-        color: var(--color-lightish-red);
-        font-weight: 500;
-    }
 }
 
 .warning-container {

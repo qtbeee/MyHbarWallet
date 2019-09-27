@@ -1,228 +1,70 @@
 <template>
     <CirclePage>
         <div class="wrap">
-            <PageTitle :title="$t('termsAndConditions.title')">
-                {{ $t("termsAndConditions.lastUpdated") }}
+            <PageTitle title="Terms of Conditions">
+                Last updated: May 10, 2018
             </PageTitle>
 
             <div class="text-content">
                 <p>
-                    {{ $t("termsAndConditions.safeAndSecure") }}
+                    Be safe &amp; secure: We highly recommend that you read our
+                    guide on How to Prevent Loss &amp; Theft for some
+                    recommendations on how to be proactive about your security.
                 </p>
                 <p>
-                    {{ $t("termsAndConditions.paragraph1") }}
+                    Always backup your keys: MyEtherWallet.com &amp;
+                    MyEtherWallet CX are not "web wallets". You do not create an
+                    account or give us your funds to hold onto. No data leaves
+                    your computer / your browser. We make it easy for you to
+                    create, save, and access your information and interact with
+                    the blockchain.
                 </p>
                 <p>
-                    {{ $t("termsAndConditions.paragraph2") }}
+                    We are not responsible for any loss: Ethereum,
+                    MyEtherWallet.com &amp; MyEtherWallet CX, and some of the
+                    underlying Javascript libraries we use are under active
+                    development. While we have thoroughly tested &amp; tens of
+                    thousands of wallets have been successfully created by
+                    people all over the globe, there is always the possibility
+                    something unexpected happens that causes your funds to be
+                    lost. Please do not invest more than you are willing to
+                    lose, and please be careful.
                 </p>
                 <p>
-                    {{ $t("termsAndConditions.paragraph3") }}
+                    Translations of MyEtherWallet: The community has done an
+                    amazing job translating MyEtherWallet into a variety of
+                    languages. However, MyEtherWallet can only verify the
+                    validity and accuracy of the information provided in English
+                    and, because of this, the English version of our website is
+                    the official text.
                 </p>
-
                 <p>
-                    <strong
-                        >Apache License<br />Version 2.0, January 2004<br
-                    /></strong>
-                    <strong
-                        ><a href="http://www.apache.org/licenses/"
-                            >http://www.apache.org/licenses/</a
-                        ></strong
-                    >
+                    MIT License Copyright © 2015-2019 MyEtherWallet INC
                 </p>
-
                 <p>
-                    {{ $t("termsAndConditions.termsAndConditionsForUse") }}
+                    Permission is hereby granted, free of charge, to any person
+                    obtaining a copy of this software and associated
+                    documentation files (the "Software"), to deal in the
+                    Software without restriction, including without limitation
+                    the rights to use, copy, modify, merge, publish, distribute,
+                    sublicense, and/or sell copies of the Software, and to
+                    permit persons to whom the Software is furnished to do so,
+                    subject to the following conditions:
                 </p>
-
                 <p>
-                    <strong
-                        ><a name="definitions">{{
-                            $t("termsAndConditions.termsAndConditionsForUse")
-                        }}</a></strong
-                    >.
+                    The above copyright notice and this permission notice shall
+                    be included in all copies or substantial portions of the
+                    Software.
                 </p>
-
-                <div>
-                    <p
-                        v-html="
-                            formatRich(
-                                $t('termsAndConditions.license').toString()
-                            )
-                        "
-                    />
-
-                    <p
-                        v-html="
-                            formatRich(
-                                $t('termsAndConditions.licensor').toString()
-                            )
-                        "
-                    />
-
-                    <p
-                        v-html="
-                            formatRich(
-                                $t('termsAndConditions.legalEntity').toString()
-                            )
-                        "
-                    />
-
-                    <p
-                        v-html="
-                            formatRich(
-                                $t('termsAndConditions.youYour').toString()
-                            )
-                        "
-                    />
-
-                    <p
-                        v-html="
-                            formatRich(
-                                $t('termsAndConditions.source').toString()
-                            )
-                        "
-                    />
-
-                    <p
-                        v-html="
-                            formatRich(
-                                $t('termsAndConditions.object').toString()
-                            )
-                        "
-                    />
-
-                    <p
-                        v-html="
-                            formatRich($t('termsAndConditions.work').toString())
-                        "
-                    />
-
-                    <p
-                        v-html="
-                            formatRich(
-                                $t(
-                                    'termsAndConditions.derivativeWorks'
-                                ).toString()
-                            )
-                        "
-                    />
-
-                    <p
-                        v-html="
-                            formatRich(
-                                $t('termsAndConditions.contribution').toString()
-                            )
-                        "
-                    />
-
-                    <p
-                        v-html="
-                            formatRich(
-                                $t('termsAndConditions.contributor').toString()
-                            )
-                        "
-                    />
-                </div>
-
                 <p>
-                    <strong
-                        ><a name="copyright">{{
-                            $t("termsAndConditions.grantOfCopyrightLicense")
-                        }}</a></strong
-                    >
-                    {{
-                        $t("termsAndConditions.grantOfCopyrightLicenseContent")
-                    }}
-                </p>
-
-                <p>
-                    <strong
-                        ><a name="patent">{{
-                            $t("termsAndConditions.grantOfPatentLicense")
-                        }}</a></strong
-                    >
-                    {{ $t("termsAndConditions.grantOfPatentLicenseContent") }}
-                </p>
-
-                <p>
-                    <strong
-                        ><a name="redistribution">{{
-                            $t("termsAndConditions.redistribution")
-                        }}</a></strong
-                    >
-                    {{ $t("termsAndConditions.redistribution.header") }}
-                </p>
-
-                <ol>
-                    <li>
-                        {{ $t("termsAndConditions.redistribution.paragraph1") }}
-                    </li>
-
-                    <li>
-                        {{ $t("termsAndConditions.redistribution.paragraph2") }}
-                    </li>
-
-                    <li>
-                        {{ $t("termsAndConditions.redistribution.paragraph3") }}
-                    </li>
-
-                    <li>
-                        {{ $t("termsAndConditions.redistribution.paragraph4") }}
-                        <br />
-                        <br />
-                        {{ $t("termsAndConditions.redistribution.paragraph5") }}
-                    </li>
-                </ol>
-
-                <p>
-                    <strong
-                        ><a name="contributions">{{
-                            $t("termsAndConditions.submission")
-                        }}</a></strong
-                    >
-                    {{ $t("termsAndConditions.submissionContent") }}
-                </p>
-
-                <p>
-                    <strong
-                        ><a name="trademarks">{{
-                            $t("termsAndConditions.trademarks")
-                        }}</a></strong
-                    >
-                    {{ $t("termsAndConditions.trademarksContent") }}
-                </p>
-
-                <p>
-                    <strong
-                        ><a name="no-warranty">{{
-                            $t("termsAndConditions.disclaimerOfWarranty")
-                        }}</a></strong
-                    >
-                    {{ $t("termsAndConditions.disclaimerOfWarrantyContent") }}
-                </p>
-
-                <p>
-                    <strong
-                        ><a name="no-liability">{{
-                            $t("termsAndConditions.limitationOfLiability")
-                        }}</a></strong
-                    >
-                    {{ $t("termsAndConditions.limitationOfLiabilityContent") }}
-                </p>
-
-                <p>
-                    <strong
-                        ><a name="additional">{{
-                            $t(
-                                "termsAndConditions.acceptingWarrantyOrAdditionalLiability"
-                            )
-                        }}</a></strong
-                    >
-                    {{
-                        $t(
-                            "termsAndConditions.acceptingWarrantyOrAdditionalLiabilityContent"
-                        )
-                    }}
+                    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+                    KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+                    WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+                    PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+                    OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+                    OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+                    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+                    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 </p>
             </div>
         </div>
@@ -232,18 +74,12 @@
 <script lang="ts">
 import CirclePage from "../components/CirclePage.vue";
 import PageTitle from "../components/PageTitle.vue";
-import { createComponent } from "@vue/composition-api";
-import { formatRich } from "../formatter";
+import { createComponent } from "vue-function-api";
 
 export default createComponent({
     components: {
         CirclePage,
         PageTitle
-    },
-    setup() {
-        return {
-            formatRich
-        };
     }
 });
 </script>
@@ -255,13 +91,10 @@ export default createComponent({
     padding: 60px 0;
 }
 
-.text-content {
+p {
     color: var(--color-china-blue);
     font-size: 14px;
     font-weight: 400;
-}
-
-p {
     margin-block-end: 30px;
 }
 </style>

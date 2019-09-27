@@ -4,24 +4,25 @@
         <div class="wrapper">
             <div class="links">
                 <router-link :to="{ name: 'privacy-policy' }" class="link">
-                    {{ $t("footer.privacy") }}
+                    Privacy
                 </router-link>
                 <router-link
                     :to="{ name: 'terms-and-conditions' }"
                     class="link"
                 >
-                    {{ $t("footer.terms") }}
+                    Terms
                 </router-link>
                 <a
                     target="_blank"
                     href="https://github.com/hashgraph/myhbarwallet"
                     class="link"
                 >
-                    v{{ version }}+{{ hash }}
+                    v0.0.0+000000
                 </a>
             </div>
             <div class="copyright">
-                &copy; {{ currentYear }} MyHbarWallet, All Rights reserved.
+                &copy; {{ currentYear }} Hedera Hashgraph LLC. All Rights
+                reserved.
             </div>
             <div class="social">
                 <a
@@ -45,7 +46,7 @@
                 <a
                     rel="noopener"
                     target="_blank"
-                    href="https://www.github.com/hashgraph/MyHbarWallet"
+                    href="https://www.github.com/hashgraph/MyHederaWallet"
                     class="social-link"
                 >
                     <MaterialDesignIcon class="social-icon" :icon="github" />
@@ -57,14 +58,9 @@
 
 <script lang="ts">
 import { mdiFacebook, mdiGithubCircle, mdiTwitter } from "@mdi/js";
-import MaterialDesignIcon from "../components/MaterialDesignIcon.vue";
-import FooterTop from "../components/FooterTop.vue";
-import { createComponent, computed } from "@vue/composition-api";
-
-// Both of these are defined in vue.config.js.
-// VERSION reads from package.json and COMMIT_HASH is git rev-parse --short HEAD output
-declare const VERSION: string;
-declare const COMMIT_HASH: string;
+import MaterialDesignIcon from "@/components/MaterialDesignIcon.vue";
+import FooterTop from "@/components/FooterTop.vue";
+import { createComponent, computed } from "vue-function-api";
 
 export default createComponent({
     components: {
@@ -86,9 +82,7 @@ export default createComponent({
             facebook,
             twitter,
             github,
-            currentYear,
-            version: VERSION,
-            hash: COMMIT_HASH
+            currentYear
         };
     }
 });
@@ -106,6 +100,8 @@ footer {
     display: flex;
     justify-content: space-between;
     margin: 0 auto;
+
+    /* FIXME: Move to main.css with a good name so we can share this value */
     max-width: 1024px;
     padding: 0 20px;
 }

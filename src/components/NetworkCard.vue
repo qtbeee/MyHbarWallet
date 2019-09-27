@@ -1,26 +1,22 @@
 <template>
     <div class="network">
-        <img :src="hedera" />
+        <img :src="hbar" />
         <div class="content">
             <div class="top">
                 <div class="title">
-                    {{ $t("networkCard.network") }}
+                    Network
                 </div>
                 <div class="subtitle">
-                    {{ networkName }}
+                    testnet
                 </div>
                 <div class="subtitle">
-                    {{ networkAddress }}
+                    0.testnet.hedera.com
                 </div>
             </div>
             <div class="actions">
-                <Tooltip
-                    :pinnable="false"
-                    :message="$t('networkCard.changeNetwork')"
-                >
-                    <button v-if="false" class="change">
-                        {{ $t("common.change") }}
-                    </button>
+                <Tooltip :pinnable="false" message="Change Network">
+                    <!--FIXME: Disabling button until it can do something -->
+                    <button v-if="false" class="change">Change</button>
                 </Tooltip>
             </div>
         </div>
@@ -29,9 +25,8 @@
 
 <script lang="ts">
 import Tooltip from "./Tooltip.vue";
-import { createComponent } from "@vue/composition-api";
-import hedera from "../assets/icon-hedera-outline.svg";
-import settings from "../settings";
+import { createComponent } from "vue-function-api";
+import hbar from "../assets/icon-hbar-outline.svg";
 
 export default createComponent({
     components: {
@@ -39,9 +34,7 @@ export default createComponent({
     },
     setup() {
         return {
-            hedera,
-            networkName: settings.network.name,
-            networkAddress: settings.network.address
+            hbar
         };
     }
 });
