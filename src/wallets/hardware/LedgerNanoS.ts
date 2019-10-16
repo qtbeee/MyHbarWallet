@@ -2,42 +2,24 @@ import Wallet from "../Wallet";
 import "regenerator-runtime"; // https://github.com/LedgerHQ/ledgerjs/issues/332
 import TransportWebUSB from "@ledgerhq/hw-transport-webusb";
 
-export const LEDGER_HEDERA_PATH = "44'/3030'/0'/0'/0'";
+// Preserving, in case we need this later
+// export const LEDGER_HEDERA_PATH = "44'/3030'/0'/0'/0'";
+
+export const INDEX = 0x01; // Key Index on Ledger
 
 export const CLA = 0xE0;
 const INS_GET_PK = 0x02;
-const INS_SIGN_TX = 0x04;
+const INS_SIGN_TX = 0x03;
 
-const P1_MORE_APDU = 0x80;
-const P1_NO_VERIFY_APDU = 0x00;
-const P2_MORE_APDU = 0x80;
+// While we do have tos end P1 and P2, we don't actually use them
+const P1_UNUSED_APDU = 0x00;
+const P2_UNUSED_APDU = 0x00;
 
 export type LedgerDeviceStatus = {
     deviceStatus: number;
     publicKey?: import("@hashgraph/sdk").PublicKey | null;
     deviceId?: string;
 };
-
-function splitPath(path: string): number[] {
-    const result: number[] = [];
-    const components = path.split("/");
-
-    components.forEach(element => {
-        let number = parseInt(element, 10);
-
-        if (isNaN(number)) {
-            throw new TypeError("Path element is NaN");
-        }
-
-        if (element.length > 1 && element[element.length - 1] === "'") {
-            number += 0x80000000;
-        }
-
-        result.push(number);
-    });
-
-    return result;
-}
 
 export default class LedgerNanoS implements Wallet {
     public hasPrivateKey(): boolean {
@@ -53,13 +35,8 @@ export default class LedgerNanoS implements Wallet {
     public async getPublicKey(): Promise<
         import("@hashgraph/sdk").PublicKey | null
     > {
-        const paths = splitPath(LEDGER_HEDERA_PATH);
-        const buffer = Buffer.alloc(1 + paths.length * 4);
-
-        buffer[0] = paths.length;
-        paths.forEach((element, index) => {
-            buffer.writeUInt32BE(element, 1 + 4 * index);
-        });
+        const buffer = Buffer.alloc(4);
+        buffer.writeUInt32LE(INDEX, 0);
 
         let transport: TransportWebUSB | null | void = null;
         let response: Buffer | null = null;
@@ -70,8 +47,8 @@ export default class LedgerNanoS implements Wallet {
                     response = await transport.send(
                         CLA,
                         INS_GET_PK,
-                        P1_NO_VERIFY_APDU, // P1_MORE_APDU
-                        P2_MORE_APDU,
+                        P1_UNUSED_APDU,
+                        P2_UNUSED_APDU,
                         buffer
                     );
                 }
@@ -104,15 +81,11 @@ export default class LedgerNanoS implements Wallet {
     public async signTransaction(
         txnData: Buffer | Uint8Array
     ): Promise<Uint8Array | null> {
-        const paths = splitPath(LEDGER_HEDERA_PATH);
         const dataBuffer = Buffer.from(txnData);
-        const buffer = Buffer.alloc(1 + dataBuffer.length + paths.length * 4);
 
-        buffer[0] = paths.length;
-        buffer.fill(dataBuffer, 1 + paths.length * 4);
-        paths.forEach((element, index) => {
-            buffer.writeUInt32BE(element, 1 + 4 * index);
-        });
+        const buffer = Buffer.alloc(1 + dataBuffer.length);
+        buffer.writeUInt32LE(INDEX, 0);
+        buffer.fill(dataBuffer, 1);
 
         let transport: TransportWebUSB | null | void = null;
         let response: Buffer | null = null;
@@ -123,8 +96,8 @@ export default class LedgerNanoS implements Wallet {
                     response = await transport.send(
                         CLA,
                         INS_SIGN_TX,
-                        P1_MORE_APDU,
-                        P2_MORE_APDU,
+                        P1_UNUSED_APDU,
+                        P2_UNUSED_APDU,
                         buffer
                     );
                 }
