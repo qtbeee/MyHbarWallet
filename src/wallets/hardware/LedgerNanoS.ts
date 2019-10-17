@@ -83,9 +83,9 @@ export default class LedgerNanoS implements Wallet {
     ): Promise<Uint8Array | null> {
         const dataBuffer = Buffer.from(txnData);
 
-        const buffer = Buffer.alloc(1 + dataBuffer.length);
+        const buffer = Buffer.alloc(4 + dataBuffer.length);
         buffer.writeUInt32LE(INDEX, 0);
-        buffer.fill(dataBuffer, 1);
+        buffer.fill(dataBuffer, 4);
 
         let transport: TransportWebUSB | null | void = null;
         let response: Buffer | null = null;
