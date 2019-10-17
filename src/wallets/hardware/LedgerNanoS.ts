@@ -9,7 +9,7 @@ export const INDEX = 0x01; // Key Index on Ledger
 
 export const CLA = 0xE0;
 const INS_GET_PK = 0x02;
-const INS_SIGN_TX = 0x03;
+const INS_SIGN_TX = 0x04;
 
 // While we do have tos end P1 and P2, we don't actually use them
 const P1_UNUSED_APDU = 0x00;
