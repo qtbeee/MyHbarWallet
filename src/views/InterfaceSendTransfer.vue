@@ -17,6 +17,7 @@
             :error="state.idErrorMessage"
             :valid="state.idValid"
             can-copy
+            :disabled="state.isBusy"
             :is-open="state.successModalIsOpen"
             :label="$t('common.toAccount')"
             show-validation

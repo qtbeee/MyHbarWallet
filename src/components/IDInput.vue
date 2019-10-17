@@ -3,6 +3,7 @@
         ref="input"
         :value="state.input"
         show-validation
+        :disabled="disabled"
         :can-copy="canCopy"
         :label="label"
         :valid="valid || partialValid"
@@ -36,6 +37,7 @@ export interface Props {
     errorMessage: string | null;
     canCopy: boolean;
     label: string;
+    disabled: boolean;
 }
 
 export default createComponent({
@@ -46,7 +48,8 @@ export default createComponent({
         isOpen: (Boolean as unknown) as PropType<boolean>,
         errorMessage: (String as unknown) as PropType<string>,
         canCopy: (Boolean as unknown) as PropType<boolean>,
-        label: (String as unknown) as PropType<string>
+        label: (String as unknown) as PropType<string>,
+        disabled: (Boolean as unknown) as PropType<boolean>
     },
     setup(props, context) {
         const state = reactive<State>({
