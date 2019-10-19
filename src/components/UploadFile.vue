@@ -40,6 +40,8 @@ import MaterialDesignIcon from "../components/MaterialDesignIcon.vue";
 import { mdiFileUpload } from "@mdi/js";
 import store from "../store";
 import { ALERT } from "../store/actions";
+import { REFRESH_BALANCE_AND_RATE } from "../store/actions";
+import BigNumber from "bignumber.js";
 
 //!Can remove with next sdk publish
 
@@ -84,7 +86,7 @@ type TransactionReceipt = {
 
 // The approximate maximum size of a chunk
 // todo [2019-31-10]: look into proper estimate
-const MAX_CHUNK_LENGTH = 2923;
+const MAX_CHUNK_LENGTH = 2969;
 
 export default createComponent({
     components: {
@@ -171,10 +173,29 @@ export default createComponent({
 
             const chunkCount = Math.ceil(file.byteLength / MAX_CHUNK_LENGTH);
 
-            for (let i = 0; i < chunkCount; i++) {
-                const start = i * MAX_CHUNK_LENGTH;
+            chunks.push(file.subarray(0, 0 + 2923));
+
+            console.log("-------------------");
+            console.log("BEGIN");
+            console.log("-------------------");
+            console.log(chunks[0].length);
+            console.log("Chunks: ");
+            console.log(chunkCount);
+
+            for (let i = 1; i < chunkCount; i++) {
+                if (i % 10 == 0) console.log("chunk " + i);
+
+                let start = i * MAX_CHUNK_LENGTH;
+
+                if (i == 1) start = i * 2923;
+
                 chunks.push(file.subarray(start, start + MAX_CHUNK_LENGTH));
             }
+
+            // for (let i = 0; i < chunkCount; i++) {
+            //     const start = i * MAX_CHUNK_LENGTH;
+            //     chunks.push(file.subarray(start, start + MAX_CHUNK_LENGTH));
+            // }
 
             const receipt = ref<TransactionReceipt | null>(null);
             const publicKey = (await store.state.wallet.session.wallet.getPublicKey()) as import("@hashgraph/sdk").Ed25519PublicKey;
@@ -184,6 +205,16 @@ export default createComponent({
             }
 
             let fileId: import("@hashgraph/sdk").FileId | undefined = undefined;
+
+            await store.dispatch(REFRESH_BALANCE_AND_RATE);
+
+            const balanceStart = store.state.wallet.balance;
+            console.log("Balance Start: ");
+            console.log(balanceStart.dividedBy(100000000).toNumber());
+
+            const costArray = [];
+            const balanceArray = [];
+            let currentBalance = new BigNumber(0);
 
             try {
                 const chunk = chunks.shift() as Uint8Array;
@@ -212,12 +243,24 @@ export default createComponent({
                     state.isBusy = false;
                     throw error;
                 }
+            } finally {
+                await store.dispatch(REFRESH_BALANCE_AND_RATE);
+                console.log("Balance After First: ");
+                currentBalance = store.state.wallet.balance as BigNumber;
+                console.log(currentBalance.dividedBy(100000000).toNumber());
+                costArray.push(
+                    balanceStart.minus(currentBalance).dividedBy(100000000)
+                );
             }
 
             if (!fileId) {
                 state.isBusy = false;
                 return;
             }
+
+            const startAppendChunks = chunks.length;
+
+            let balanceBeforeLastTransaction = new BigNumber(0);
 
             try {
                 while (chunks.length > 0) {
@@ -229,6 +272,31 @@ export default createComponent({
                         .setTransactionFee(1e12)
                         .build()
                         .executeForReceipt();
+                    if (chunks.length == 1) {
+                        await store.dispatch(REFRESH_BALANCE_AND_RATE);
+                        balanceBeforeLastTransaction = store.state.wallet
+                            .balance as BigNumber;
+                    }
+                    console.log("chunks left " + chunks.length);
+                    await store.dispatch(REFRESH_BALANCE_AND_RATE);
+                    currentBalance = store.state.wallet.balance as BigNumber;
+                    console.log("last cost: ");
+                    const lastCost = costArray[costArray.length - 1].toNumber();
+                    console.log(lastCost);
+                    console.log("current cost: ");
+                    const currentTotalCost = balanceStart
+                        .minus(currentBalance)
+                        .dividedBy(100000000);
+                    let currentCost = currentTotalCost;
+                    for (const cost of costArray) {
+                        currentCost = currentCost.minus(cost);
+                    }
+                    console.log(currentCost.toNumber());
+                    costArray.push(currentCost);
+                    console.log(
+                        "Balance After " + (startAppendChunks - chunks.length)
+                    );
+                    console.log(currentBalance.dividedBy(100000000).toNumber());
                 }
             } catch (error) {
                 if (
@@ -246,6 +314,46 @@ export default createComponent({
                 }
             } finally {
                 state.isBusy = false;
+                console.log("Final Balance: ");
+                await store.dispatch(REFRESH_BALANCE_AND_RATE);
+                const finalBalance = store.state.wallet.balance;
+                const finalCost = balanceStart.minus(finalBalance);
+                const costForAvg = balanceStart.minus(
+                    balanceBeforeLastTransaction
+                );
+                console.log(finalBalance.toNumber());
+                console.log("All Costs: ");
+                const costNumsArray = [];
+                for (const cost of costArray) {
+                    console.log(cost.toNumber());
+                    costNumsArray.push(cost.toNumber());
+                }
+                console.log("-------------");
+                console.log("Summary: ");
+                console.log("-------------");
+                console.log("Hbar spent: ");
+                console.log(finalCost.dividedBy(100000000).toNumber());
+                console.log("Cost before last tx: ");
+                console.log(costForAvg.dividedBy(100000000).toNumber());
+                console.log("Over " + chunkCount + " Transactions");
+                console.log("Total average: ");
+                console.log(
+                    finalCost
+                        .dividedBy(100000000)
+                        .dividedBy(chunkCount)
+                        .toNumber()
+                );
+                console.log(
+                    "Average Cost (in Hbar without including last transaction): "
+                );
+                console.log(
+                    costForAvg
+                        .dividedBy(100000000)
+                        .dividedBy(chunkCount - 1)
+                        .toNumber()
+                );
+                console.log("Max cost: ");
+                console.log(Math.max(...costNumsArray));
             }
 
             // notifies file was uploaded
