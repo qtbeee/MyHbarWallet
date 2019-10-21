@@ -15,6 +15,9 @@ const INS_SIGN_TX = 0x04;
 const P1_UNUSED_APDU = 0x00;
 const P2_UNUSED_APDU = 0x00;
 
+const P1_FIRST = 0x01;
+const P1_LAST = 0x08;
+
 export type LedgerDeviceStatus = {
     deviceStatus: number;
     publicKey?: import("@hashgraph/sdk").PublicKey | null;
@@ -82,8 +85,8 @@ export default class LedgerNanoS implements Wallet {
         txnData: Buffer | Uint8Array
     ): Promise<Uint8Array | null> {
         const dataBuffer = Buffer.from(txnData);
-
         const buffer = Buffer.alloc(4 + dataBuffer.length);
+
         buffer.writeUInt32LE(INDEX, 0);
         buffer.fill(dataBuffer, 4);
 
@@ -91,25 +94,31 @@ export default class LedgerNanoS implements Wallet {
         let response: Buffer | null = null;
 
         try {
-            transport = await TransportWebUSB.create().then(
-                async (transport: TransportWebUSB) => {
-                    response = await transport.send(
-                        CLA,
-                        INS_SIGN_TX,
-                        P1_UNUSED_APDU,
-                        P2_UNUSED_APDU,
-                        buffer
-                    );
-                }
+            transport = await TransportWebUSB.create();
+
+            await transport.send(
+                CLA,
+                INS_SIGN_TX,
+                P1_FIRST,
+                P2_UNUSED_APDU,
+                buffer
+            );
+
+            response = await transport.send(
+                CLA,
+                INS_SIGN_TX,
+                P1_LAST,
+                P2_UNUSED_APDU,
+                buffer
             );
 
             if (response !== null) {
                 // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-                // @ts-ignore
+                // @ts-ignore1
                 return new Uint8Array(response.slice(0, response.length - 2));
             }
 
-            return null;
+            throw new Error("unexpected empty response from Ledger device");
         } finally {
             if (transport !== null && transport !== undefined) {
                 // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
