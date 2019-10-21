@@ -310,7 +310,7 @@ export default createComponent({
                     });
                 } else {
                     state.isBusy = false;
-                    throw new Error(error);
+                    console.log(error);
                 }
             } finally {
                 state.isBusy = false;
