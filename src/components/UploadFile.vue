@@ -224,7 +224,7 @@ export default createComponent({
                     .setContents(chunk)
                     .setExpirationTime(Date.now() + 7890000000)
                     .addKey(publicKey)
-                    .setTransactionFee(1e12)
+                    .setTransactionFee(520000000)
                     .build()
                     .executeForReceipt();
 
@@ -269,7 +269,7 @@ export default createComponent({
                     >)
                         .setFileId(fileId)
                         .setContents(chunks.shift() as Uint8Array)
-                        .setTransactionFee(1e12)
+                        .setTransactionFee(520000000)
                         .build()
                         .executeForReceipt();
                     if (chunks.length == 1) {
