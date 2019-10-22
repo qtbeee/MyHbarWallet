@@ -11,7 +11,6 @@ export const CLA = 0xE0;
 const INS_GET_PK = 0x02;
 const INS_SIGN_TX = 0x04;
 
-// While we do have tos end P1 and P2, we don't actually use them
 const P1_UNUSED_APDU = 0x00;
 const P2_UNUSED_APDU = 0x00;
 
@@ -23,6 +22,14 @@ export type LedgerDeviceStatus = {
     publicKey?: import("@hashgraph/sdk").PublicKey | null;
     deviceId?: string;
 };
+
+interface APDU {
+    CLA: number;
+    INS: number;
+    P1: number;
+    P2: number;
+    buffer: Buffer;
+}
 
 export default class LedgerNanoS implements Wallet {
     public hasPrivateKey(): boolean {
@@ -41,44 +48,29 @@ export default class LedgerNanoS implements Wallet {
         const buffer = Buffer.alloc(4);
         buffer.writeUInt32LE(INDEX, 0);
 
-        let transport: TransportWebUSB | null | void = null;
-        let response: Buffer | null = null;
+        const response = await this.sendAPDU({
+            CLA,
+            INS: INS_GET_PK,
+            P1: P1_UNUSED_APDU,
+            P2: P2_UNUSED_APDU,
+            buffer
+        });
 
-        try {
-            transport = await TransportWebUSB.create().then(
-                async (transport: TransportWebUSB) => {
-                    response = await transport.send(
-                        CLA,
-                        INS_GET_PK,
-                        P1_UNUSED_APDU,
-                        P2_UNUSED_APDU,
-                        buffer
-                    );
-                }
-            );
-
-            if (response !== null) {
-                const publicKeyStr = response
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-                    // @ts-ignore
-                    .slice(0, response.length - 2)
-                    .toString("hex");
-
-                const publicKey = (await import(
-                    "@hashgraph/sdk"
-                )).Ed25519PublicKey.fromString(publicKeyStr);
-
-                return publicKey;
-            }
-
-            return null;
-        } finally {
-            if (transport !== null && transport !== undefined) {
+        if (response !== null) {
+            const publicKeyStr = response
                 // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
                 // @ts-ignore
-                await transport.close();
-            }
+                .slice(0, response.length - 2)
+                .toString("hex");
+
+            const publicKey = (await import(
+                "@hashgraph/sdk"
+            )).Ed25519PublicKey.fromString(publicKeyStr);
+
+            return publicKey;
         }
+
+        throw new Error("Unexpected Empty Response from Ledger Device");
     }
 
     public async signTransaction(
@@ -90,35 +82,51 @@ export default class LedgerNanoS implements Wallet {
         buffer.writeUInt32LE(INDEX, 0);
         buffer.fill(dataBuffer, 4);
 
+        await this.sendAPDU({
+            CLA,
+            INS: INS_SIGN_TX,
+            P1: P1_FIRST,
+            P2: P2_UNUSED_APDU,
+            buffer
+        });
+
+        const response = await this.sendAPDU({
+            CLA,
+            INS: INS_SIGN_TX,
+            P1: P1_LAST,
+            P2: P2_UNUSED_APDU,
+            buffer
+        });
+
+        if (response !== null) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+            // @ts-ignore1
+            return new Uint8Array(response.slice(0, response.length - 2));
+        }
+
+        throw new Error("Unexpected Empty Response From Ledger Device");
+    }
+
+    private async sendAPDU(message: APDU): Promise<Buffer | null> {
         let transport: TransportWebUSB | null | void = null;
         let response: Buffer | null = null;
 
         try {
-            transport = await TransportWebUSB.create();
-
-            await transport.send(
-                CLA,
-                INS_SIGN_TX,
-                P1_FIRST,
-                P2_UNUSED_APDU,
-                buffer
+            // DO NOT SEPARATE CREATE THEN.
+            // TransportWebUSB requires a context managed async callback
+            transport = await TransportWebUSB.create().then(
+                async (transport: TransportWebUSB) => {
+                    response = await transport.send(
+                        message.CLA,
+                        message.INS,
+                        message.P1,
+                        message.P2,
+                        message.buffer
+                    );
+                }
             );
 
-            response = await transport.send(
-                CLA,
-                INS_SIGN_TX,
-                P1_LAST,
-                P2_UNUSED_APDU,
-                buffer
-            );
-
-            if (response !== null) {
-                // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-                // @ts-ignore1
-                return new Uint8Array(response.slice(0, response.length - 2));
-            }
-
-            throw new Error("unexpected empty response from Ledger device");
+            return response;
         } finally {
             if (transport !== null && transport !== undefined) {
                 // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
